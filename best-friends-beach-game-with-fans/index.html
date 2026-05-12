@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>החברות הכי טובות בים</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="page">
+    <section class="game-card">
+      <header class="top-bar">
+        <div>
+          <h1>החברות הכי טובות בים</h1>
+          <p>אספי צדפים, התחמקי מהגלים, והגיעי לחברה הכי טובה ליד השמשייה. המעריצים מחכים ומריעים לכן!</p>
+        </div>
+
+        <button id="restartBtn" class="primary-button" type="button">משחק חדש</button>
+      </header>
+
+      <section class="hud" aria-label="מידע על המשחק">
+        <div class="hud-item">
+          <span class="hud-label">צדפים</span>
+          <strong id="scoreText">0 / 8</strong>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">לבבות</span>
+          <strong id="livesText">3</strong>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">זמן</span>
+          <strong id="timeText">60</strong>
+        </div>
+      </section>
+
+      <div class="canvas-wrap">
+        <canvas id="gameCanvas" width="960" height="540" aria-label="משחק חברות בים"></canvas>
+
+        <div id="messageBox" class="message-box is-visible">
+          <h2 id="messageTitle">מוכנות להרפתקה בים?</h2>
+          <p id="messageText">זוזי עם החצים או WASD. בטלפון השתמשי בכפתורי התנועה. המטרה: לאסוף 8 צדפים לפני שהזמן נגמר.</p>
+          <button id="startBtn" class="primary-button" type="button">התחלה</button>
+        </div>
+      </div>
+
+      <section class="mobile-controls" aria-label="כפתורי תנועה">
+        <button class="move-button" data-dir="up" type="button">למעלה</button>
+        <div class="middle-controls">
+          <button class="move-button" data-dir="right" type="button">ימינה</button>
+          <button class="move-button" data-dir="left" type="button">שמאלה</button>
+        </div>
+        <button class="move-button" data-dir="down" type="button">למטה</button>
+      </section>
+
+      <footer class="instructions">
+        <strong>איך משחקים:</strong>
+        <span>אוספים צדפים ורצים לחברה ליד השמשייה כדי לקבל בונוס. המעריצים מריעים בכל צדף. לא נוגעים בגלים הכחולים.</span>
+      </footer>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

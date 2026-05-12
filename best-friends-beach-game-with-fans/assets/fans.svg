@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="230" height="120" viewBox="0 0 230 120">
+  <defs>
+    <linearGradient id="sign" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff5b8"/>
+      <stop offset="100%" stop-color="#ffd36d"/>
+    </linearGradient>
+  </defs>
+
+  <ellipse cx="114" cy="111" rx="90" ry="9" fill="#8d6032" opacity="0.18"/>
+
+  <g transform="translate(12 24)">
+    <circle cx="22" cy="20" r="15" fill="#ffd2b4"/>
+    <path d="M8 17 C10 2 33 2 36 17 C29 12 17 12 8 17Z" fill="#6b3f24"/>
+    <circle cx="17" cy="21" r="2.2" fill="#263238"/>
+    <circle cx="27" cy="21" r="2.2" fill="#263238"/>
+    <path d="M17 30 C21 34 25 34 29 30" stroke="#bd5b64" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M11 48 L33 48 L40 91 L4 91Z" fill="#83d7ff"/>
+    <path d="M9 53 C-2 45 -4 35 2 28" stroke="#ffd2b4" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M35 53 C49 42 50 32 44 25" stroke="#ffd2b4" stroke-width="8" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <g transform="translate(62 16)">
+    <circle cx="24" cy="24" r="16" fill="#ffd7bf"/>
+    <path d="M8 24 C8 7 40 6 41 25 C32 17 18 17 8 24Z" fill="#a56a35"/>
+    <circle cx="18" cy="25" r="2.3" fill="#263238"/>
+    <circle cx="30" cy="25" r="2.3" fill="#263238"/>
+    <path d="M18 34 C23 39 28 39 33 34" stroke="#bd5b64" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M13 53 L36 53 L45 97 L3 97Z" fill="#ff8ab3"/>
+    <path d="M11 59 C-4 49 -3 36 5 28" stroke="#ffd7bf" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M38 59 C53 49 53 36 45 28" stroke="#ffd7bf" stroke-width="8" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <g transform="translate(118 24)">
+    <circle cx="22" cy="20" r="15" fill="#f3c49d"/>
+    <path d="M8 18 C10 4 34 1 37 18 C26 12 18 12 8 18Z" fill="#2f2721"/>
+    <circle cx="17" cy="21" r="2.2" fill="#263238"/>
+    <circle cx="27" cy="21" r="2.2" fill="#263238"/>
+    <path d="M17 30 C21 34 25 34 29 30" stroke="#bd5b64" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M11 48 L33 48 L40 91 L4 91Z" fill="#a8e06f"/>
+    <path d="M9 53 C-2 45 -4 35 2 28" stroke="#f3c49d" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M35 53 C49 42 50 32 44 25" stroke="#f3c49d" stroke-width="8" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <g transform="translate(166 17)">
+    <circle cx="24" cy="24" r="16" fill="#ffd0b1"/>
+    <path d="M8 26 C7 8 41 4 42 27 C31 18 19 18 8 26Z" fill="#7b4a2e"/>
+    <circle cx="18" cy="25" r="2.3" fill="#263238"/>
+    <circle cx="30" cy="25" r="2.3" fill="#263238"/>
+    <path d="M18 34 C23 39 28 39 33 34" stroke="#bd5b64" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M13 53 L36 53 L45 97 L3 97Z" fill="#b79cff"/>
+    <path d="M11 59 C-4 49 -3 36 5 28" stroke="#ffd0b1" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M38 59 C53 49 53 36 45 28" stroke="#ffd0b1" stroke-width="8" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <g transform="translate(76 2)">
+    <rect x="0" y="0" rx="10" ry="10" width="86" height="30" fill="url(#sign)" stroke="#e5a63d" stroke-width="3"/>
+    <path d="M17 24 L14 39 L28 27" fill="#ffd36d" stroke="#e5a63d" stroke-width="2"/>
+    <text x="43" y="21" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#1c6b88">Go friends!</text>
+  </g>
+
+  <path d="M21 10 L25 2 L29 10 L38 11 L31 17 L33 26 L25 21 L17 26 L19 17 L12 11Z" fill="#ffdc6e"/>
+  <path d="M203 12 L207 4 L211 12 L220 13 L213 19 L215 28 L207 23 L199 28 L201 19 L194 13Z" fill="#ffdc6e"/>
+</svg>

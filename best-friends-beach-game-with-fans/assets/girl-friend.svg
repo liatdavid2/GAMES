@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="170" viewBox="0 0 120 170">
+  <defs>
+    <linearGradient id="dress2" x1="0" y1="62" x2="0" y2="145">
+      <stop offset="0%" stop-color="#ff95bc"/>
+      <stop offset="100%" stop-color="#ff6f91"/>
+    </linearGradient>
+    <linearGradient id="hair2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#c78b42"/>
+      <stop offset="100%" stop-color="#7f4c20"/>
+    </linearGradient>
+  </defs>
+
+  <ellipse cx="62" cy="158" rx="34" ry="8" fill="#9a7138" opacity="0.22"/>
+
+  <path d="M38 73 C24 90 24 121 35 143" stroke="#ffd5b8" stroke-width="13" stroke-linecap="round" fill="none"/>
+  <path d="M83 72 C98 90 101 119 88 143" stroke="#ffd5b8" stroke-width="13" stroke-linecap="round" fill="none"/>
+
+  <path d="M43 78 C51 66 71 66 80 78 L98 145 L27 145 Z" fill="url(#dress2)"/>
+  <circle cx="47" cy="145" r="7" fill="#ffd5b8"/>
+  <circle cx="78" cy="145" r="7" fill="#ffd5b8"/>
+
+  <path d="M47 139 L42 160" stroke="#ffd5b8" stroke-width="9" stroke-linecap="round"/>
+  <path d="M75 139 L81 160" stroke="#ffd5b8" stroke-width="9" stroke-linecap="round"/>
+
+  <circle cx="62" cy="54" r="30" fill="#ffd5b8"/>
+  <path d="M35 54 C38 25 83 19 93 52 C80 37 54 34 35 54 Z" fill="url(#hair2)"/>
+  <path d="M31 58 C18 76 28 101 44 108" fill="none" stroke="#8b5525" stroke-width="12" stroke-linecap="round"/>
+  <path d="M92 56 C108 76 96 101 80 110" fill="none" stroke="#8b5525" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="51" cy="58" r="3.6" fill="#263238"/>
+  <circle cx="73" cy="58" r="3.6" fill="#263238"/>
+  <path d="M52 73 C58 81 69 81 75 73" fill="none" stroke="#bd5b64" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="41" cy="64" r="4" fill="#ffadba" opacity="0.65"/>
+  <circle cx="84" cy="64" r="4" fill="#ffadba" opacity="0.65"/>
+
+  <path d="M42 37 L82 37" stroke="#ffdc6e" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="42" cy="37" r="6" fill="#ffdc6e"/>
+  <circle cx="82" cy="37" r="6" fill="#ffdc6e"/>
+</svg>

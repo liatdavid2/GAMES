@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="70" viewBox="0 0 150 70">
+  <defs>
+    <linearGradient id="wave" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7ce4ff"/>
+      <stop offset="100%" stop-color="#1aa4d1"/>
+    </linearGradient>
+  </defs>
+  <ellipse cx="75" cy="55" rx="58" ry="10" fill="#126983" opacity="0.14"/>
+  <path d="M9 43 C24 15 48 20 56 38 C64 57 90 51 94 32 C99 8 129 17 141 44 C122 58 30 59 9 43 Z" fill="url(#wave)"/>
+  <path d="M22 38 C35 28 46 31 55 43 C70 54 86 50 95 35 C105 22 123 27 133 40" fill="none" stroke="#ffffff" stroke-width="7" opacity="0.78" stroke-linecap="round"/>
+</svg>
