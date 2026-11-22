@@ -2,3 +2,12 @@
 @media(min-width:650px){.choices{grid-template-columns:repeat(6,minmax(0,1fr))}.camera-frame{aspect-ratio:4/3}}
 @media(max-width:350px){.choice .emoji{font-size:26px}.primary,.secondary,.tab-button{font-size:12px;padding:10px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* Cinderella: illustrated choices */
+.choice .emoji{font-size:30px;display:flex;align-items:center;justify-content:center;min-height:37px}
+.choice .emoji img{width:43px;height:43px;object-fit:contain;filter:drop-shadow(0 2px 3px #7d4cac25)}
+.tab-page[data-page="cinderella"] .panel{border-color:#c9dcff;background:linear-gradient(160deg,#fff,#f8faff)}
+.tab-page[data-page="cinderella"] .choice.active{background:#eaf3ff;border-color:#5895d6}
+
+/* Display supplied artwork, not emoji stand-ins, in Cinderella selections. */
+.choice .emoji img{width:58px;height:53px;object-fit:contain;display:block;filter:drop-shadow(0 2px 3px rgba(70,58,145,.16))}.choice:has(img){min-height:105px}.choice .name{line-height:1.2}

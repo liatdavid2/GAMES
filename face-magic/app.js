@@ -8,7 +8,7 @@ const $$ = s => [...document.querySelectorAll(s)];
 const state = {
   activeTab:'magic',
   tattoo:'🦋', position:'right', accessory:'none', smile:'💖',
-  cinderellaTattoo:'slipper', cinderellaCompanion:'fairy', cinderellaAccessory:'tiara', cinderellaBackdrop:'ballroom',
+  cinderellaTattoo:'glitter_swirl', cinderellaCompanion:'none', cinderellaAccessory:'tiara', cinderellaDress:'dress_blue', cinderellaPosition:'both',
   facing:'user', stream:null, landmarker:null, running:false, result:null, timestamp:-1, frame:0, lastDetection:0
 };
 const sets = {
@@ -16,10 +16,11 @@ const sets = {
  position:[['right','לחי ימין','👉'],['left','לחי שמאל','👈'],['both','שתי לחיים','💕'],['forehead','מצח','🎯']],
  accessory:[['none','בלי','🚫'],['👑','כתר'],['😎','משקפיים'],['🐱','אוזניים'],['🎀','סרט'],['🥸','שפם']],
  smile:[['💖','לבבות'],['⭐','כוכבים'],['🌸','פרחים'],['🌈','קשתות'],['none','בלי','🚫']],
- cinderellaTattoo:[['slipper','נעל זכוכית','👠'],['dress','שמלה כחולה','👗'],['fairy','פיה','🪄'],['prince','נסיך','🤴'],['clock','שעון','🕛'],['coach','כרכרה','🎃'],['star','כוכב קסם','✨'],['none','בלי','🚫']],
- cinderellaCompanion:[['fairy','פיה טובה','🧚'],['prince','נסיך','🤴'],['mice','חברים קטנים','🐭'],['clock','שעון חצות','🕛'],['coach','כרכרה','🎠'],['none','בלי','🚫']],
- cinderellaAccessory:[['tiara','כתר זכוכית','👑'],['headband','סרט כחול','🎀'],['sparkles','ניצוצות','✨'],['bow','קשת לשיער','💙'],['none','בלי','🚫']],
- cinderellaBackdrop:[['ballroom','אולם נשף','🏰'],['stairs','מדרגות הטירה','🪜'],['carriage','כרכרה בלילה','🌙'],['garden','גן קסום','🌹'],['window','חלון וכוכבים','✨']]
+ cinderellaTattoo:[['glitter_swirl','נצנצים כחולים','✨'],['castle_tattoo','טירה קסומה','🏰'],['slipper_tattoo','נעל ונצנצים','👠'],['slipper','נעל זכוכית','💎'],['star','כוכבי קסם','⭐'],['none','בלי','🚫']],
+ cinderellaCompanion:[['fairy','פיה טובה','🧚'],['prince','נסיך','🤴'],['coach','כרכרה','🎠'],['none','בלי','🚫']],
+ cinderellaAccessory:[['tiara','כתר משובץ','👑'],['none','בלי כתר','🚫']],
+ cinderellaDress:[['dress_blue','שמלה כחולה','👗'],['none','בלי שמלה','🚫']],
+ cinderellaPosition:[['both','שתי לחיים','💕'],['right','לחי אחת','👉'],['left','לחי שנייה','👈'],['forehead','מצח','🎯']]
 };
 
 function buildChoices(key){
@@ -29,7 +30,10 @@ function buildChoices(key){
    const [value,name,icon=value] = item;
    const button = document.createElement('button'); button.type='button'; button.className='choice';
    button.setAttribute('aria-label',name);
-   button.innerHTML=`<span class="emoji" aria-hidden="true">${icon === 'none'?'🚫':icon}</span><span class="name">${name}</span>`;
+   const artKeys=['cinderellaTattoo','cinderellaCompanion','cinderellaAccessory','cinderellaDress'];
+   const artName=artKeys.includes(key) && value!=='none' ? value : null;
+   const ext = ['star','clock','bow'].includes(artName)?'svg':'png';
+   button.innerHTML=`<span class="emoji" aria-hidden="true">${artName?`<img src="assets/${artName}.${ext}" alt="">`:icon === 'none'?'🚫':icon}</span><span class="name">${name}</span>`;
    button.addEventListener('click',()=>{state[key]=value; updateChoices();});
    button.dataset.value=value;node.appendChild(button);
  }
@@ -145,74 +149,46 @@ function stopTracks(){state.stream?.getTracks().forEach(t=>t.stop());state.strea
 function point(lm,index){const p=lm[index];return {x:p.x*CANVAS.width,y:p.y*CANVAS.height};}
 function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function emoji(text,x,y,size,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.textAlign='center';CTX.textBaseline='middle';CTX.font=`${Math.round(size)}px "Apple Color Emoji","Segoe UI Emoji",sans-serif`;CTX.fillText(text,0,0);CTX.restore();}
-function glowCircle(x,y,r,fill){CTX.beginPath();CTX.arc(x,y,r,0,Math.PI*2);CTX.fillStyle=fill;CTX.fill();}
-function drawGlassSlipper(x,y,s,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.scale(s,s);CTX.beginPath();CTX.moveTo(-0.9,0.25);CTX.quadraticCurveTo(-0.15,-0.35,0.72,-0.22);CTX.quadraticCurveTo(0.98,-0.12,1.0,0.15);CTX.quadraticCurveTo(0.75,0.26,0.52,0.55);CTX.quadraticCurveTo(0.28,0.75,-0.18,0.72);CTX.quadraticCurveTo(-0.55,0.67,-0.92,0.44);CTX.closePath();CTX.fillStyle='rgba(179,231,255,0.55)';CTX.fill();CTX.lineWidth=0.08;CTX.strokeStyle='rgba(255,255,255,0.95)';CTX.stroke();CTX.beginPath();CTX.moveTo(-0.15,0.15);CTX.lineTo(0.4,0.08);CTX.strokeStyle='rgba(210,247,255,0.9)';CTX.stroke();CTX.restore();}
-function drawDressIcon(x,y,s,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.scale(s,s);CTX.fillStyle='#8bc0ff';CTX.beginPath();CTX.moveTo(0,-1);CTX.lineTo(0.35,-0.65);CTX.lineTo(0.68,0.8);CTX.quadraticCurveTo(0,1.22,-0.68,0.8);CTX.lineTo(-0.35,-0.65);CTX.closePath();CTX.fill();CTX.beginPath();CTX.arc(0,-1.17,0.18,0,Math.PI*2);CTX.fillStyle='#ffe2bf';CTX.fill();CTX.strokeStyle='rgba(255,255,255,.95)';CTX.lineWidth=0.08;CTX.stroke();CTX.beginPath();CTX.moveTo(-0.18,-0.72);CTX.lineTo(0.18,-0.72);CTX.stroke();CTX.restore();}
-function drawWand(x,y,s,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.scale(s,s);CTX.strokeStyle='#f8d36a';CTX.lineWidth=0.13;CTX.beginPath();CTX.moveTo(-0.65,0.75);CTX.lineTo(0.28,-0.18);CTX.stroke();for(let i=0;i<5;i++){const a=-Math.PI/2+i*(Math.PI*2/5);CTX.beginPath();CTX.moveTo(Math.cos(a)*0.12,Math.sin(a)*0.12-0.45);CTX.lineTo(Math.cos(a+Math.PI/5)*0.46,Math.sin(a+Math.PI/5)*0.46-0.45);CTX.lineTo(Math.cos(a+2*Math.PI/5)*0.12,Math.sin(a+2*Math.PI/5)*0.12-0.45);CTX.closePath();CTX.fillStyle=i%2?'#fff4a6':'#ffe284';CTX.fill();}CTX.restore();}
-function drawPrinceBadge(x,y,s,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.scale(s,s);CTX.fillStyle='#315ab8';CTX.fillRect(-0.28,-0.6,0.56,1.0);CTX.fillStyle='#d9ecff';CTX.fillRect(-0.08,-0.55,0.16,0.9);CTX.beginPath();CTX.arc(0,-0.9,0.24,0,Math.PI*2);CTX.fillStyle='#ffd9bf';CTX.fill();CTX.fillStyle='#f2d469';CTX.beginPath();CTX.moveTo(-0.4,-1.23);CTX.lineTo(-0.16,-1.0);CTX.lineTo(0,-1.22);CTX.lineTo(0.16,-1.0);CTX.lineTo(0.4,-1.23);CTX.lineTo(0.28,-0.88);CTX.lineTo(-0.28,-0.88);CTX.closePath();CTX.fill();CTX.restore();}
-function drawClock(x,y,s,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.scale(s,s);CTX.beginPath();CTX.arc(0,0,1,0,Math.PI*2);CTX.fillStyle='rgba(255,247,205,.95)';CTX.fill();CTX.lineWidth=0.1;CTX.strokeStyle='#d8b45d';CTX.stroke();for(let i=0;i<12;i++){const a=i*Math.PI/6;CTX.beginPath();CTX.moveTo(Math.cos(a)*0.72,Math.sin(a)*0.72);CTX.lineTo(Math.cos(a)*0.88,Math.sin(a)*0.88);CTX.stroke();}CTX.lineWidth=0.12;CTX.beginPath();CTX.moveTo(0,0);CTX.lineTo(0,-0.48);CTX.moveTo(0,0);CTX.lineTo(0.34,0);CTX.strokeStyle='#61517c';CTX.stroke();CTX.restore();}
-function drawCoach(x,y,s,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.scale(s,s);CTX.beginPath();CTX.arc(0,0,0.56,0,Math.PI*2);CTX.fillStyle='rgba(244,181,72,.94)';CTX.fill();CTX.beginPath();CTX.moveTo(-0.25,-0.1);CTX.quadraticCurveTo(0,-0.65,0.25,-0.1);CTX.lineWidth=0.09;CTX.strokeStyle='#fff5d1';CTX.stroke();glowCircle(-0.45,0.56,0.18,'#f1d284');glowCircle(0.45,0.56,0.18,'#f1d284');CTX.strokeStyle='#ad6a15';CTX.lineWidth=0.08;CTX.strokeRect(-0.26,-0.08,0.52,0.45);CTX.restore();}
-function drawTiara(x,y,s,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.scale(s,s);CTX.beginPath();CTX.moveTo(-1,0.42);CTX.quadraticCurveTo(-0.55,-0.22,-0.26,0.12);CTX.quadraticCurveTo(0,-0.52,0.26,0.12);CTX.quadraticCurveTo(0.55,-0.22,1,0.42);CTX.lineTo(1,0.72);CTX.lineTo(-1,0.72);CTX.closePath();CTX.fillStyle='rgba(171,226,255,0.75)';CTX.fill();CTX.strokeStyle='rgba(255,255,255,0.95)';CTX.lineWidth=0.08;CTX.stroke();glowCircle(0,-0.1,0.12,'#f9f7ff');glowCircle(-0.55,0.1,0.08,'#d6f2ff');glowCircle(0.55,0.1,0.08,'#d6f2ff');CTX.restore();}
-function drawHeadband(x,y,s,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.scale(s,s);CTX.beginPath();CTX.arc(0,0,1.1,Math.PI*1.05,Math.PI*1.95);CTX.lineWidth=0.2;CTX.strokeStyle='#78aaf8';CTX.stroke();CTX.restore();}
-function drawSparkles(x,y,s,count=7){CTX.save();CTX.translate(x,y);for(let i=0;i<count;i++){const a=i*(Math.PI*2/count)+performance.now()/1100;const px=Math.cos(a)*s*(0.55+0.12*(i%2));const py=Math.sin(a)*s*(0.35+0.11*(i%3));CTX.save();CTX.translate(px,py);CTX.rotate(a);CTX.fillStyle=i%2?'rgba(255,245,176,.95)':'rgba(218,240,255,.95)';for(let j=0;j<4;j++){CTX.beginPath();CTX.moveTo(0,-s*0.11);CTX.lineTo(s*0.03,0);CTX.lineTo(0,s*0.11);CTX.lineTo(-s*0.03,0);CTX.closePath();CTX.fill();CTX.rotate(Math.PI/2);}CTX.restore();}CTX.restore();}
-function drawBackdrop(name,w,h){
-  CTX.save();
-  if(name==='ballroom'){
-    const g=CTX.createLinearGradient(0,0,0,h); g.addColorStop(0,'rgba(106,80,182,.30)'); g.addColorStop(1,'rgba(245,225,255,.18)'); CTX.fillStyle=g; CTX.fillRect(0,0,w,h);
-    CTX.fillStyle='rgba(255,255,255,.18)'; for(let i=0;i<4;i++){CTX.fillRect(w*(0.08+i*0.22),h*0.12,w*0.08,h*0.44);} 
-    CTX.fillStyle='rgba(72,46,120,.22)'; CTX.fillRect(0,h*0.84,w,h*0.16);
-  } else if(name==='stairs'){
-    CTX.fillStyle='rgba(196,220,255,.20)'; CTX.fillRect(0,0,w,h);
-    CTX.fillStyle='rgba(255,255,255,.18)'; for(let i=0;i<8;i++){CTX.fillRect(w*0.12,h*(0.88-i*0.055),w*0.76,h*0.03);} 
-    CTX.strokeStyle='rgba(214,233,255,.35)'; CTX.lineWidth=4; CTX.beginPath(); CTX.moveTo(w*0.16,h*0.87); CTX.lineTo(w*0.03,h*0.28); CTX.moveTo(w*0.84,h*0.87); CTX.lineTo(w*0.97,h*0.28); CTX.stroke();
-  } else if(name==='carriage'){
-    const g=CTX.createLinearGradient(0,0,0,h); g.addColorStop(0,'rgba(33,53,120,.42)'); g.addColorStop(1,'rgba(122,84,200,.16)'); CTX.fillStyle=g; CTX.fillRect(0,0,w,h);
-    glowCircle(w*0.82,h*0.18,h*0.06,'rgba(255,248,210,.45)');
-    for(let i=0;i<18;i++){glowCircle((i*139)%w,((i*77)%Math.floor(h*0.55))+12,1.6+(i%3),'rgba(255,255,255,.8)');}
-    CTX.fillStyle='rgba(25,18,64,.35)'; CTX.fillRect(0,h*0.87,w,h*0.13);
-    drawCoach(w*0.18,h*0.79,h*0.05,0);
-  } else if(name==='garden'){
-    const g=CTX.createLinearGradient(0,0,0,h); g.addColorStop(0,'rgba(255,226,241,.25)'); g.addColorStop(1,'rgba(128,193,148,.18)'); CTX.fillStyle=g; CTX.fillRect(0,0,w,h);
-    for(let i=0;i<9;i++){glowCircle((i*97)%w,h*0.93,h*0.07,'rgba(101,173,97,.22)'); glowCircle(((i*97)+24)%w,h*0.88,h*0.025,'rgba(255,148,180,.38)');}
-  } else if(name==='window'){
-    const g=CTX.createLinearGradient(0,0,0,h); g.addColorStop(0,'rgba(43,62,130,.35)'); g.addColorStop(1,'rgba(174,214,255,.12)'); CTX.fillStyle=g; CTX.fillRect(0,0,w,h);
-    CTX.strokeStyle='rgba(234,247,255,.35)'; CTX.lineWidth=5; CTX.strokeRect(w*0.16,h*0.10,w*0.68,h*0.36); CTX.beginPath(); CTX.moveTo(w*0.50,h*0.10); CTX.lineTo(w*0.50,h*0.46); CTX.moveTo(w*0.16,h*0.28); CTX.lineTo(w*0.84,h*0.28); CTX.stroke();
-    for(let i=0;i<15;i++){glowCircle((i*61)%Math.floor(w*0.62)+w*0.19,((i*47)%Math.floor(h*0.26))+h*0.14,1.8+(i%2),'rgba(255,255,255,.82)');}
-  }
-  CTX.restore();
+// Images are stored locally in the repository, with transparent backgrounds.
+const assetNames=['tiara','dress_blue','slipper','glitter_swirl','castle_tattoo','slipper_tattoo','fairy','prince','coach','star'];
+const assetImages={};
+for(const name of assetNames){
+ const img=new Image();
+ img.src=`assets/${name}.${name==='star'?'svg':'png'}`;
+ assetImages[name]=img;
 }
-function drawCinderellaTattoo(kind,x,y,s,angle){
-  if(kind==='slipper') return drawGlassSlipper(x,y,s,angle);
-  if(kind==='dress') return drawDressIcon(x,y,s,angle);
-  if(kind==='fairy') return drawWand(x,y,s,angle);
-  if(kind==='prince') return drawPrinceBadge(x,y,s,angle);
-  if(kind==='clock') return drawClock(x,y,s,angle);
-  if(kind==='coach') return drawCoach(x,y,s,angle);
-  if(kind==='star') return drawSparkles(x,y,s,6);
-}
-function drawCompanion(kind,anchorX,anchorY,s,tilt){
-  if(kind==='fairy'){ drawWand(anchorX,anchorY,s*0.65,tilt-0.45); emoji('🧚',anchorX+s*0.24,anchorY-s*0.18,s*0.62,0); }
-  if(kind==='prince'){ drawPrinceBadge(anchorX,anchorY,s*0.42,0); }
-  if(kind==='mice'){ emoji('🐭',anchorX-s*0.15,anchorY,s*0.48,0); emoji('🐭',anchorX+s*0.18,anchorY+s*0.04,s*0.38,0); }
-  if(kind==='clock'){ drawClock(anchorX,anchorY,s*0.36,0); }
-  if(kind==='coach'){ drawCoach(anchorX,anchorY,s*0.34,0); }
+function drawArt(name,x,y,w,h,angle=0){
+ const img=assetImages[name];
+ if(!img||!img.complete||!img.naturalWidth)return;
+ const ratio=img.naturalWidth/img.naturalHeight;
+ if(!h)h=w/ratio;
+ CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.drawImage(img,-w/2,-h/2,w,h);CTX.restore();
 }
 function drawCinderellaFace(lm,smile,index){
- const left=point(lm,234),right=point(lm,454),top=point(lm,10),chin=point(lm,152),eyeL=point(lm,33),eyeR=point(lm,263),mouth=point(lm,13);
- const faceW=distance(left,right), faceH=distance(top,chin);
+ const left=point(lm,234),right=point(lm,454),top=point(lm,10),chin=point(lm,152),eyeL=point(lm,33),eyeR=point(lm,263);
+ const faceW=distance(left,right),faceH=distance(top,chin);
  const tilt=Math.atan2(eyeR.y-eyeL.y,eyeR.x-eyeL.x);
- const cheekA=point(lm,205), cheekB=point(lm,425), forehead=point(lm,151);
- const tattooTargets=[cheekA, cheekB, forehead];
- if(state.cinderellaTattoo!=='none') tattooTargets.forEach((p,idx)=>drawCinderellaTattoo(state.cinderellaTattoo,p.x+(idx===2?0:idx===0?-faceW*0.02:faceW*0.02),p.y-(idx===2?faceH*0.01:0),Math.max(16,faceW*0.12),tilt));
- const centerX=(eyeL.x+eyeR.x)/2,centerY=(eyeL.y+eyeR.y)/2;
- if(state.cinderellaAccessory==='tiara') drawTiara(top.x,top.y-faceH*0.12,faceW*0.32,tilt);
- if(state.cinderellaAccessory==='headband') drawHeadband(top.x,top.y-faceH*0.03,faceW*0.25,tilt);
- if(state.cinderellaAccessory==='bow') emoji('💙',top.x-faceW*0.23,top.y-faceH*0.10,faceW*0.16,tilt);
- if(state.cinderellaAccessory==='sparkles') drawSparkles(top.x,top.y-faceH*0.11,faceW*0.22,7);
- drawDressIcon(centerX,chin.y+faceH*0.15,faceW*0.24,0);
- if(state.cinderellaCompanion!=='none') drawCompanion(state.cinderellaCompanion,left.x-faceW*0.24,chin.y-faceH*0.02,faceW*0.34,tilt);
- if(smile){ drawSparkles(right.x+faceW*0.16,top.y-faceH*0.02,faceW*0.17,5); }
- drawGlassSlipper(mouth.x+faceW*0.28, chin.y+faceH*0.06, faceW*0.08, tilt*0.2);
+ const cheeks=[point(lm,205),point(lm,425)], forehead=point(lm,151);
+ const targets=state.cinderellaPosition==='both'?cheeks:state.cinderellaPosition==='forehead'?[forehead]:[cheeks[state.cinderellaPosition==='right'?0:1]];
+ if(state.cinderellaTattoo!=='none'){
+   const w=faceW*(state.cinderellaPosition==='forehead'?.28:.35);
+   targets.forEach((p,i)=>drawArt(state.cinderellaTattoo,p.x,p.y,w,0,tilt+(i===1?-.09:.09)));
+ }
+ if(state.cinderellaAccessory==='tiara'){
+   // Crown sits over natural hair, no artificial hair added.
+   drawArt('tiara',top.x,top.y-faceH*.19,faceW*1.12,0,tilt);
+ }
+ if(state.cinderellaDress==='dress_blue'){
+   // Wearable bodice anchored below the chin, scaled to estimated shoulders.
+   // Face mesh alone does not locate shoulders; the overlay is approximate.
+   const shoulderY=chin.y+faceH*.47;
+   drawArt('dress_blue',chin.x,shoulderY,faceW*2.22,0,tilt*.30);
+ }
+ if(state.cinderellaCompanion!=='none'){
+   const name=state.cinderellaCompanion;
+   const x=right.x+faceW*.45,y=(top.y+chin.y)*.50;
+   drawArt(name,x,y,faceW*.75,0,0);
+ }
 }
 function drawMagicFace(lm,smile,index){
  const left=point(lm,234),right=point(lm,454),top=point(lm,10),chin=point(lm,152),eyeL=point(lm,33),eyeR=point(lm,263);
@@ -242,7 +218,6 @@ function paint(){
  CTX.save();
  if(state.facing==='user'){CTX.translate(w,0);CTX.scale(-1,1);}
  CTX.drawImage(VIDEO,0,0,w,h);
- if(state.activeTab==='cinderella') drawBackdrop(state.cinderellaBackdrop,w,h);
  if(state.result?.faceLandmarks?.length){
    state.result.faceLandmarks.forEach((lm,i)=>{
      if(state.activeTab==='cinderella') drawCinderellaFace(lm,smileDetected(i),i);
@@ -255,7 +230,7 @@ function loop(now){if(!state.running)return; if(VIDEO.readyState>=2){ if(state.l
 function savePhoto(){ if(!state.running||!CANVAS.width)return; paint(); const filename=`face-magic-${new Date().toISOString().replace(/[:.]/g,'-')}.png`; CANVAS.toBlob(blob=>{ if(!blob){alert('לא ניתן לשמור תמונה במכשיר הזה');return;} const url=URL.createObjectURL(blob); const a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove(); setTimeout(()=>URL.revokeObjectURL(url),30000); status('התמונה נשמרה או הועברה להורדות 📸'); },'image/png'); }
 function clearCurrent(){
  if(state.activeTab==='cinderella'){
-   state.cinderellaTattoo='none'; state.cinderellaCompanion='none'; state.cinderellaAccessory='none'; state.cinderellaBackdrop='ballroom';
+   state.cinderellaTattoo='none'; state.cinderellaCompanion='none'; state.cinderellaAccessory='none'; state.cinderellaDress='none'; state.cinderellaPosition='both';
  } else {
    state.tattoo='none'; state.accessory='none'; state.smile='none'; state.position='right';
  }
