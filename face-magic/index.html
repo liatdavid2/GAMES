@@ -6,11 +6,11 @@
   <meta name="theme-color" content="#8f49d8">
   <meta name="description" content="קסם על הפנים: משחק פילטרים וקעקועים עם מצלמה, לגילאי 6 ומעלה">
   <title>קסם על הפנים ✨</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
   <main class="app">
-    <header><div class="eyebrow">✨ סטודיו הקסמים שלי ✨</div><h1>קסם על הפנים <span>🦋</span></h1><p>בחרי קסם, חייכי וצלמי!</p></header>
+    <header><div class="eyebrow">✨ סטודיו הקסמים שלי ✨</div><h1>קסם על הפנים <span>🦋</span></h1><p class="version">גרסה 3 · תיקון זיהוי פנים</p><p>בחרי קסם, חייכי וצלמי!</p></header>
     <section class="camera-card" aria-label="מצלמה ואפקטים">
       <div class="camera-frame" id="cameraFrame">
         <video id="video" autoplay muted playsinline aria-hidden="true"></video>
@@ -18,6 +18,12 @@
         <div class="empty" id="empty"><div class="empty-emoji">🪄💖</div><strong>מוכנה לקסם?</strong><p>לחצי על הכפתור כדי להפעיל את המצלמה</p><button id="startButton" class="primary large">📷 הפעילי מצלמה</button></div>
         <div id="status" class="status" role="status" aria-live="polite"></div>
         <span class="privacy">🔒 התמונות נשארות אצלך</span>
+      </div>
+      <div id="modelPanel" class="model-panel" hidden>
+        <strong>⚠️ זיהוי הפנים לא נטען</strong>
+        <p>המצלמה עובדת, אבל צריך לטעון ספריית זיהוי פנים וקובץ מודל מהאינטרנט. בדקי חיבור ורענני, או נסי שוב.</p>
+        <p id="modelDetails" class="model-details" dir="ltr"></p>
+        <button id="retryButton" type="button" class="secondary">🔁 נסי שוב לטעון זיהוי פנים</button>
       </div>
       <div class="camera-buttons">
         <button id="saveButton" class="primary" disabled>📸 שמור תמונה</button>
@@ -31,6 +37,6 @@
     <section class="panel" aria-label="תכנות קסם"><h2>4. תכנתִי קסם משלך 🧩</h2><p class="hint">כשאני מחייכת 😄 → יופיעו...</p><div class="choices" id="smileChoices"></div><p class="hint tiny">האפקט מופיע כשיוצרים חיוך מול המצלמה</p></section>
     <footer>ללא הרשמה • ללא העלאת תמונות • המצלמה פועלת רק אחרי אישורך<br><span>בעזרת הורה, אפשר לשמור את התמונה ולשלוח לחברות 💌</span></footer>
   </main>
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=3"></script>
 </body>
 </html>

@@ -25,14 +25,59 @@ function buildChoices(key){
 function updateChoices(){for(const key of Object.keys(sets)) for(const b of $(`#${key}Choices`).children){ const active=b.dataset.value===state[key]; b.classList.toggle('active',active); b.setAttribute('aria-pressed',String(active)); }}
 Object.keys(sets).forEach(buildChoices);updateChoices();
 function status(text){$('#status').textContent=text;}
-async function makeLandmarker(){
- if(state.landmarker)return;
- status('טוענת קסמים... ✨');
- const {FaceLandmarker,FilesetResolver}=await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}/+esm`);
- const vision=await FilesetResolver.forVisionTasks(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}/wasm`);
- const config={baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate:'GPU'},runningMode:'VIDEO',numFaces:2,outputFaceBlendshapes:true};
- try{state.landmarker=await FaceLandmarker.createFromOptions(vision,config)}
- catch(err){console.warn('GPU unavailable, using CPU',err);config.baseOptions.delegate='CPU';state.landmarker=await FaceLandmarker.createFromOptions(vision,config)}
+// Version 3: load a real MediaPipe bundle, with CDN fallback and readable diagnostics.
+let loadingModel = false;
+function showModelError(err) {
+ const message = String(err?.message || err || 'שגיאה לא ידועה');
+ console.error('Face model loading error:', err);
+ $('#modelDetails').textContent = `פרטי התקלה: ${message.slice(0, 350)}`;
+ $('#modelPanel').hidden = false;
+ $('#retryButton').disabled = false;
+ status('📷 המצלמה עובדת. זיהוי הפנים לא נטען. לחצי על ״נסי שוב״ לפרטים.');
+}
+async function makeLandmarker() {
+ if(state.landmarker || loadingModel) return;
+ loadingModel = true;
+ $('#retryButton').disabled = true;
+ $('#modelPanel').hidden = true;
+ const sources = [
+   {base:'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22', version:'0.10.22'},
+   {base:'https://unpkg.com/@mediapipe/tasks-vision@0.10.22', version:'0.10.22'},
+   {base:'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21', version:'0.10.21'}
+ ];
+ const modelUrls = [
+   'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'
+ ];
+ const errors = [];
+ try {
+   for(const source of sources) {
+     status(`✨ טוענת זיהוי פנים (${source.version})...`);
+     try {
+       const visionModule = await import(`${source.base}/vision_bundle.mjs`);
+       const {FaceLandmarker, FilesetResolver} = visionModule;
+       if (!FaceLandmarker || !FilesetResolver) throw new Error('הספרייה נטענה ללא FaceLandmarker');
+       const vision = await FilesetResolver.forVisionTasks(`${source.base}/wasm`);
+       for (const modelUrl of modelUrls) {
+         for (const delegate of ['GPU', 'CPU']) {
+           try {
+             state.landmarker = await FaceLandmarker.createFromOptions(vision, {
+               baseOptions: {modelAssetPath: modelUrl, delegate},
+               runningMode: 'VIDEO', numFaces: 2, outputFaceBlendshapes: true
+             });
+             $('#modelPanel').hidden = true;
+             status('✅ זיהוי הפנים מוכן! בחרי קעקוע 🦋');
+             return;
+           } catch(err) { errors.push(`${source.version} ${delegate}: ${String(err.message || err).slice(0,120)}`); }
+         }
+       }
+     } catch(err) { errors.push(`${source.version}: ${String(err.message || err).slice(0,150)}`); }
+   }
+   throw new Error(errors.join(' | ') || 'לא ניתן לטעון את קובצי MediaPipe');
+ } finally {loadingModel = false;}
+}
+async function loadFaceModel() {
+ try { await makeLandmarker(); }
+ catch(err) {showModelError(err);}
 }
 function cameraErrorMessage(err){
  if(!window.isSecureContext) return 'יש לפתוח את האתר בכתובת HTTPS של GitHub Pages (לא כקובץ מקומי).';
@@ -52,13 +97,7 @@ async function startCamera(){
    $('#saveButton').disabled=false;$('#switchButton').disabled=false;
    state.running=true;requestAnimationFrame(loop);
    status('המצלמה פועלת! טוענת זיהוי פנים... ✨');
-   try{
-      await makeLandmarker();
-      status('הציגי את הפנים למצלמה 😊');
-   }catch(modelError){
-      console.error('Face tracking failed',modelError);
-      status('המצלמה עובדת 📷 אבל זיהוי הפנים לא נטען. בדקי חיבור לאינטרנט ורענני.');
-   }
+   await loadFaceModel();
  }catch(err){
     console.error('Camera start failed',err);
     const message=cameraErrorMessage(err);
@@ -145,6 +184,7 @@ function savePhoto(){
  },'image/png');
 }
 $('#startButton').addEventListener('click',startCamera);
+$('#retryButton').addEventListener('click',loadFaceModel);
 $('#saveButton').addEventListener('click',savePhoto);
 $('#switchButton').addEventListener('click',async()=>{
  state.running=false;state.facing=state.facing==='user'?'environment':'user';
