@@ -4,7 +4,7 @@ const VIDEO = document.querySelector('#video');
 const CANVAS = document.querySelector('#view');
 const CTX = CANVAS.getContext('2d', {alpha:false});
 const $ = s => document.querySelector(s);
-const state = { tattoo:'🦋', position:'right', accessory:'none', smile:'💖', facing:'user', stream:null, landmarker:null, running:false, result:null, timestamp:-1, frame:0, lastDetection:0, mode:'classic', mermaid:{hair:'pink',crown:'shells',scales:'pink',gem:'pearl',necklace:'pearls',bubbles:'bubbles',friend:'dolphin',tail:'pink',eyes:'sparkle'} };
+const state = { tattoo:'🦋', position:'right', accessory:'none', smile:'💖', facing:'user', stream:null, landmarker:null, running:false, result:null, timestamp:-1, frame:0, lastDetection:0, mode:'classic', mermaid:{hair:'pink',crown:'shells',scales:'pink',gem:'pearl',necklace:'pearls',bubbles:'bubbles',friend:'dolphin',tail:'pink',eyes:'sparkle',tattoos:'shells'} };
 const sets = {
  tattoo:[['🦋','פרפר'],['💖','לב'],['⭐','כוכב'],['🌈','קשת'],['🌸','פרח'],['🐱','חתול'],['⚡','ברק'],['none','בלי']],
  position:[['right','לחי ימין','👉'],['left','לחי שמאל','👈'],['both','שתי לחיים','💕'],['forehead','מצח','🎯']],
@@ -36,6 +36,7 @@ const mermaidSets = {
  bubbles:[['none','בלי','🚫'],['bubbles','בועות','🫧'],['sparkles','נצנצים','✨'],['hearts','לבבות','💖'],['stars','כוכבים','🌟']],
  friend:[['none','בלי','🚫'],['dolphin','דולפין','🐬'],['turtle','צב ים','🐢'],['fish','דגים','🐠'],['jelly','מדוזה','🪼'],['crab','סרטן','🦀']],
  tail:[['none','בלי','🚫'],['pink','ורוד','🩷'],['aqua','טורקיז','🩵'],['purple','סגול','💜'],['gold','זהב','💛'],['rainbow','קשת','🌈']],
+ tattoos:[['none','בלי','🚫'],['shells','צדפי פנינה','🐚'],['stars','כוכבי ים','⭐'],['pearls','טיפות פנינה','💎'],['coral','אלמוגים','🪸'],['wave','גלי ים','🌊']],
  eyes:[['none','בלי','🚫'],['sparkle','נצנצים','✨'],['aqua','טורקיז','🩵'],['pink','ורוד','🩷'],['purple','סגול','💜']]
 };
 const mermaidPalettes={
@@ -44,9 +45,9 @@ const mermaidPalettes={
  gold:['#f1bd55','#fff0a6','#cf8c1b'],rainbow:['#6bc9e5','#ff9dcf','#d193ef']
 };
 const mermaidPresets={
- pink:{hair:'pink',crown:'shells',scales:'pink',gem:'pearl',necklace:'pearls',bubbles:'bubbles',friend:'dolphin',tail:'pink',eyes:'sparkle'},
- ocean:{hair:'aqua',crown:'pearls',scales:'aqua',gem:'diamond',necklace:'shells',bubbles:'sparkles',friend:'turtle',tail:'aqua',eyes:'aqua'},
- purple:{hair:'purple',crown:'star',scales:'purple',gem:'diamond',necklace:'stars',bubbles:'hearts',friend:'jelly',tail:'purple',eyes:'purple'}
+ pink:{hair:'pink',crown:'shells',scales:'pink',gem:'pearl',necklace:'pearls',bubbles:'bubbles',friend:'dolphin',tail:'pink',eyes:'sparkle',tattoos:'shells'},
+ ocean:{hair:'aqua',crown:'pearls',scales:'aqua',gem:'diamond',necklace:'shells',bubbles:'sparkles',friend:'turtle',tail:'aqua',eyes:'aqua',tattoos:'wave'},
+ purple:{hair:'purple',crown:'star',scales:'purple',gem:'diamond',necklace:'stars',bubbles:'hearts',friend:'jelly',tail:'purple',eyes:'purple',tattoos:'stars'}
 };
 function updateMermaidChoices(){
  for(const key of Object.keys(mermaidSets)){
@@ -230,33 +231,119 @@ function mermaidGradient(x0,y0,x1,y1,colors){
  gradient.addColorStop(0,colors[0]);gradient.addColorStop(.53,colors[1]);gradient.addColorStop(1,colors[2]);
  return gradient;
 }
+// Layered hand-drawn hair: deep base, curled locks, translucent highlights and fine strands.
 function mermaidHair(top,faceW,faceH,tilt,kind){
  if(kind==='none')return;
- const palette=mermaidPalettes[kind]||mermaidPalettes.pink;
+ const c=mermaidPalettes[kind]||mermaidPalettes.pink;
+ const hairColors=kind==='rainbow'?['#39bfc2','#ff87c4','#a174df']:c;
  CTX.save();CTX.translate(top.x,top.y);CTX.rotate(tilt);
  const w=faceW,h=faceH;
- const rainbow=kind==='rainbow';
- const hairFill=rainbow?mermaidGradient(-w*.6,0,w*.6,h*.5,['#6be5dc','#d19afa','#ff84ae']):mermaidGradient(-w*.5,0,w*.5,h, palette);
- CTX.globalAlpha=.84;
- // Soft wavy side locks. We draw around the face, leaving the eyes and mouth clear.
- for(const direction of [-1,1]){
-   CTX.beginPath();CTX.moveTo(direction*w*.46,-h*.06);
-   CTX.bezierCurveTo(direction*w*.68,h*.08,direction*w*.40,h*.42,direction*w*.62,h*.68);
-   CTX.bezierCurveTo(direction*w*.75,h*.88,direction*w*.57,h*.95,direction*w*.54,h*.98);
-   CTX.lineWidth=w*.18;CTX.lineCap='round';CTX.strokeStyle=hairFill;CTX.stroke();
-   CTX.beginPath();CTX.moveTo(direction*w*.45,0);
-   CTX.bezierCurveTo(direction*w*.58,h*.26,direction*w*.40,h*.58,direction*w*.60,h*.78);
-   CTX.strokeStyle=palette[1];CTX.globalAlpha=.56;CTX.lineWidth=w*.038;CTX.stroke();CTX.globalAlpha=.84;
+ const grad=CTX.createLinearGradient(-w*.67,-h*.42,w*.7,h*.93);
+ grad.addColorStop(0,hairColors[2]);grad.addColorStop(.30,hairColors[0]);grad.addColorStop(.60,hairColors[1]);grad.addColorStop(1,hairColors[2]);
+ // Side hair is drawn as several locks with tapered ends, not rectangular bands.
+ for(const side of [-1,1]){
+   for(let layer=3;layer>=0;layer--){
+     const x=side*w*(.42+layer*.046), end=side*w*(.49+layer*.060);
+     const spread=h*(.68+layer*.095);
+     CTX.beginPath();CTX.moveTo(x,-h*.18);
+     CTX.bezierCurveTo(x+side*w*.21,h*.10,x-side*w*.105,h*.43,end,spread);
+     CTX.bezierCurveTo(end-side*w*.055,spread+h*.14,end-side*w*.12,spread+h*.12,end-side*w*.15,spread+h*.035);
+     CTX.bezierCurveTo(end-side*w*.18,spread-h*.16,x-side*w*.13,h*.22,x-side*w*.075,-h*.17);
+     CTX.closePath();CTX.fillStyle=grad;CTX.globalAlpha=.94-layer*.035;CTX.fill();
+     CTX.beginPath();CTX.moveTo(x-side*w*.038,-h*.13);
+     CTX.bezierCurveTo(x+side*w*.12,h*.14,x-side*w*.18,h*.48,end-side*w*.095,spread+h*.012);
+     CTX.strokeStyle=hairColors[1];CTX.lineWidth=Math.max(1.1,w*(.014-layer*.001));CTX.globalAlpha=.40;CTX.stroke();
+   }
  }
- // Hair cap at the top, above the forehead.
- CTX.beginPath();CTX.moveTo(-w*.55,h*.085);
- CTX.bezierCurveTo(-w*.67,-h*.39,-w*.28,-h*.48,0,-h*.45);
- CTX.bezierCurveTo(w*.36,-h*.50,w*.65,-h*.32,w*.57,h*.09);
- CTX.bezierCurveTo(w*.34,-h*.18,w*.14,-h*.24,0,-h*.14);
- CTX.bezierCurveTo(-w*.17,-h*.05,-w*.38,-h*.05,-w*.55,h*.085);
- CTX.closePath();CTX.fillStyle=hairFill;CTX.fill();
- CTX.globalAlpha=.5;CTX.beginPath();CTX.moveTo(-w*.25,-h*.30);
- CTX.quadraticCurveTo(0,-h*.40,w*.29,-h*.29);CTX.lineWidth=w*.027;CTX.strokeStyle=palette[1];CTX.stroke();
+ // Voluminous hairline, split fringe, keeping forehead, eyes and mouth visible.
+ CTX.globalAlpha=.98;
+ CTX.beginPath();CTX.moveTo(-w*.55,h*.025);
+ CTX.bezierCurveTo(-w*.71,-h*.24,-w*.47,-h*.53,-w*.17,-h*.49);
+ CTX.bezierCurveTo(w*.12,-h*.60,w*.52,-h*.48,w*.58,-h*.08);
+ CTX.bezierCurveTo(w*.62,h*.04,w*.57,h*.095,w*.47,h*.12);
+ CTX.bezierCurveTo(w*.32,-h*.11,w*.12,-h*.17,-w*.01,-h*.09);
+ CTX.bezierCurveTo(-w*.20,h*.045,-w*.41,-h*.08,-w*.55,h*.025);
+ CTX.fillStyle=grad;CTX.fill();
+ for(let k=0;k<9;k++){
+   const x=-w*.43+k*w*.105;
+   CTX.beginPath();CTX.moveTo(x,-h*(.30+.095*Math.sin(k*.55)));
+   CTX.quadraticCurveTo(x+w*.085,-h*.32,x+w*.10,-h*(.15+.025*Math.cos(k)));
+   CTX.strokeStyle=k%3===0?'#ffffff':hairColors[1];CTX.globalAlpha=k%3===0?.27:.42;
+   CTX.lineWidth=Math.max(1,w*(k%3===0?.010:.007));CTX.stroke();
+ }
+ CTX.restore();
+}
+
+// Pearlescent seashell and star shapes drawn as vector art, not emoji glyphs.
+function shellShape(x,y,size,angle=0,color='#ffd7ed'){
+ CTX.save();CTX.translate(x,y);CTX.rotate(angle);
+ const r=size/2;const g=CTX.createRadialGradient(-r*.28,-r*.34,r*.08,0,0,r*1.3);
+ g.addColorStop(0,'#fffdf8');g.addColorStop(.42,color);g.addColorStop(1,'#b56eac');
+ CTX.beginPath();CTX.moveTo(0,r*.72);
+ CTX.bezierCurveTo(-r*.24,r*.20,-r*1.0,r*.13,-r*.88,-r*.53);
+ CTX.bezierCurveTo(-r*.61,-r*1.16,r*.63,-r*1.16,r*.89,-r*.53);
+ CTX.bezierCurveTo(r*1.0,r*.14,r*.24,r*.20,0,r*.72);
+ CTX.closePath();CTX.fillStyle=g;CTX.fill();CTX.strokeStyle='#fff8f4';CTX.lineWidth=Math.max(1,r*.065);CTX.stroke();
+ for(let a=-2;a<=2;a++){
+  CTX.beginPath();CTX.moveTo(0,r*.66);CTX.quadraticCurveTo(a*r*.20,-r*.23,a*r*.36,-r*.79);
+  CTX.strokeStyle='rgba(255,255,255,.64)';CTX.lineWidth=Math.max(1,r*.055);CTX.stroke();
+ }
+ CTX.beginPath();CTX.ellipse(0,r*.60,r*.16,r*.11,0,0,Math.PI*2);CTX.fillStyle='#fff3d0';CTX.fill();CTX.restore();
+}
+function pearl(x,y,r){
+ const g=CTX.createRadialGradient(x-r*.37,y-r*.42,0,x,y,r);
+ g.addColorStop(0,'#fff');g.addColorStop(.36,'#fffaf7');g.addColorStop(.75,'#eacbed');g.addColorStop(1,'#a685ba');
+ CTX.beginPath();CTX.arc(x,y,r,0,Math.PI*2);CTX.fillStyle=g;CTX.fill();
+ CTX.lineWidth=Math.max(1,r*.09);CTX.strokeStyle='rgba(255,255,255,.7)';CTX.stroke();
+}
+function seaStar(x,y,r,fill='#f9b6d5'){
+ CTX.save();CTX.translate(x,y);CTX.beginPath();
+ for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.43:r;const xx=Math.cos(a)*rr,yy=Math.sin(a)*rr;if(!i)CTX.moveTo(xx,yy);else CTX.lineTo(xx,yy);}
+ CTX.closePath();CTX.fillStyle=fill;CTX.fill();CTX.strokeStyle='#fff1d9';CTX.lineWidth=Math.max(1,r*.13);CTX.stroke();
+ pearl(0,-r*.08,r*.17);CTX.restore();
+}
+function mermaidCrown(top,faceW,faceH,tilt,kind){
+ if(kind==='none')return;
+ CTX.save();CTX.translate(top.x,top.y-faceH*.28);CTX.rotate(tilt);
+ const w=faceW,h=faceH;
+ // Tiara band that follows the hairline.
+ const metal=CTX.createLinearGradient(-w*.50,0,w*.50,0);metal.addColorStop(0,'#ac7296');metal.addColorStop(.35,'#fff6d8');metal.addColorStop(.62,'#ffe4bb');metal.addColorStop(1,'#a76c92');
+ CTX.beginPath();CTX.moveTo(-w*.46,h*.085);CTX.quadraticCurveTo(0,-h*.12,w*.46,h*.085);
+ CTX.strokeStyle=metal;CTX.lineWidth=Math.max(4,w*.044);CTX.lineCap='round';CTX.stroke();
+ CTX.beginPath();CTX.moveTo(-w*.42,h*.10);CTX.quadraticCurveTo(0,-h*.08,w*.42,h*.10);
+ CTX.strokeStyle='rgba(255,255,255,.85)';CTX.lineWidth=Math.max(1,w*.010);CTX.stroke();
+ for(let i=-2;i<=2;i++){
+   let x=i*w*.18,y=h*(.018+.045*Math.abs(i));let size=w*(i===0?.36:.235);
+   if(kind==='coral'){
+     CTX.beginPath();CTX.moveTo(x,y+h*.08);CTX.bezierCurveTo(x-w*.045,y-h*.17,x+w*.08,y-h*.22,x,y-h*.28);
+     CTX.strokeStyle='#f38f9f';CTX.lineWidth=w*.045;CTX.stroke();
+     seaStar(x,y-h*.16,w*.085,'#ffb7a0');
+   }else if(kind==='star')seaStar(x,y-h*.10,size*.46,i===0?'#ffd190':'#ffaccb');
+   else if(kind==='pearls'){
+     pearl(x,y-h*.11,w*(i===0?.105:.072));
+     pearl(x,y+h*.022,w*.035);
+   }else shellShape(x,y-h*.07,size,i*.16,i===0?'#ffe0ed':'#e9d5fc');
+ }
+ pearl(0,h*.11,w*.058);CTX.restore();
+}
+function mermaidTattoo(cheek,faceW,tilt,kind,side){
+ if(kind==='none')return;
+ CTX.save();CTX.translate(cheek.x,cheek.y+faceW*.06);CTX.rotate(tilt+side*.11);
+ const r=faceW*.12;
+ for(let i=0;i<3;i++){
+   const x=(i-1)*r*.9,y=-Math.abs(i-1)*r*.28;
+   if(kind==='shells')shellShape(x,y,r*.82,side*.18,'#f8cce9');
+   else if(kind==='stars')seaStar(x,y,r*.44,i===1?'#ffd4a3':'#fbc0df');
+   else if(kind==='pearls')pearl(x,y,r*(i===1?.29:.20));
+   else if(kind==='coral'){
+     CTX.strokeStyle=i===1?'#ff9aad':'#9fd5ca';CTX.lineWidth=Math.max(2,r*.09);CTX.lineCap='round';
+     CTX.beginPath();CTX.moveTo(x,y+r*.34);CTX.quadraticCurveTo(x-r*.36,y-r*.22,x-r*.18,y-r*.41);CTX.moveTo(x,y+r*.17);CTX.quadraticCurveTo(x+r*.32,y-r*.10,x+r*.23,y-r*.34);CTX.stroke();
+     pearl(x,y-r*.32,r*.12);
+   }else{
+     CTX.beginPath();CTX.moveTo(x-r*.38,y);CTX.bezierCurveTo(x-r*.14,y-r*.38,x+r*.04,y+r*.25,x+r*.38,y-r*.12);
+     CTX.strokeStyle=i%2?'#b8eef0':'#7dd2da';CTX.lineWidth=Math.max(2,r*.12);CTX.lineCap='round';CTX.stroke();
+   }
+ }
  CTX.restore();
 }
 function mermaidScales(cheek,faceW,tilt,kind){
@@ -344,17 +431,12 @@ function drawMermaidFace(lm,index){
  mermaidScales(point(lm,205),faceW,tilt,selection.scales);
  mermaidScales(point(lm,425),faceW,tilt,selection.scales);
  mermaidEyes(lm,faceW,selection.eyes);
- if(selection.crown!=='none'){
-   const icons={shells:'🐚',pearls:'👑',coral:'🪸',star:'⭐'};
-   emoji(icons[selection.crown],top.x,top.y-faceH*.31,faceW*.44,tilt);
-   if(selection.crown==='shells'){
-     emoji('⭐',top.x-faceW*.27,top.y-faceH*.24,faceW*.19,tilt);
-     emoji('⭐',top.x+faceW*.27,top.y-faceH*.24,faceW*.19,tilt);
-   }
- }
+ mermaidCrown(top,faceW,faceH,tilt,selection.crown);
+ mermaidTattoo(point(lm,205),faceW,tilt,selection.tattoos,-1);
+ mermaidTattoo(point(lm,425),faceW,tilt,selection.tattoos,1);
  if(selection.gem!=='none'){
    const icons={pearl:'⚪',diamond:'💎',star:'⭐',shell:'🐚'};
-   emoji(icons[selection.gem],point(lm,151).x,point(lm,151).y+faceH*.09,faceW*.17,tilt);
+   const gp=point(lm,151); if(selection.gem==='pearl')pearl(gp.x,gp.y+faceH*.09,faceW*.075);else if(selection.gem==='shell')shellShape(gp.x,gp.y+faceH*.09,faceW*.19);else if(selection.gem==='star')seaStar(gp.x,gp.y+faceH*.09,faceW*.09);else emoji(icons[selection.gem],gp.x,gp.y+faceH*.09,faceW*.17,tilt);
  }
  mermaidNecklace(chin,faceW,faceH,tilt,selection.necklace);
  mermaidTail(chin,faceW,faceH,tilt,selection.tail);
