@@ -4,15 +4,27 @@ const VIDEO = document.querySelector('#video');
 const CANVAS = document.querySelector('#view');
 const CTX = CANVAS.getContext('2d', {alpha:false});
 const $ = s => document.querySelector(s);
-const state = { tattoo:'🦋', position:'right', accessory:'none', smile:'💖', facing:'user', stream:null, landmarker:null, running:false, result:null, timestamp:-1, frame:0, lastDetection:0, mode:'classic', mermaid:{hair:'pink',crown:'shells',scales:'pink',gem:'pearl',necklace:'pearls',bubbles:'bubbles',friend:'dolphin',tail:'pink',eyes:'sparkle',tattoos:'shells'} };
+const $$ = s => [...document.querySelectorAll(s)];
+const state = {
+  activeTab:'magic',
+  tattoo:'🦋', position:'right', accessory:'none', smile:'💖',
+  cinderellaTattoo:'slipper', cinderellaCompanion:'fairy', cinderellaAccessory:'tiara', cinderellaBackdrop:'ballroom',
+  facing:'user', stream:null, landmarker:null, running:false, result:null, timestamp:-1, frame:0, lastDetection:0
+};
 const sets = {
- tattoo:[['🦋','פרפר'],['💖','לב'],['⭐','כוכב'],['🌈','קשת'],['🌸','פרח'],['🐱','חתול'],['⚡','ברק'],['none','בלי']],
+ tattoo:[['🦋','פרפר'],['💖','לב'],['⭐','כוכב'],['🌈','קשת'],['🌸','פרח'],['🐱','חתול'],['⚡','ברק'],['none','בלי','🚫']],
  position:[['right','לחי ימין','👉'],['left','לחי שמאל','👈'],['both','שתי לחיים','💕'],['forehead','מצח','🎯']],
  accessory:[['none','בלי','🚫'],['👑','כתר'],['😎','משקפיים'],['🐱','אוזניים'],['🎀','סרט'],['🥸','שפם']],
- smile:[['💖','לבבות'],['⭐','כוכבים'],['🌸','פרחים'],['🌈','קשתות'],['none','בלי','🚫']]
+ smile:[['💖','לבבות'],['⭐','כוכבים'],['🌸','פרחים'],['🌈','קשתות'],['none','בלי','🚫']],
+ cinderellaTattoo:[['slipper','נעל זכוכית','👠'],['dress','שמלה כחולה','👗'],['fairy','פיה','🪄'],['prince','נסיך','🤴'],['clock','שעון','🕛'],['coach','כרכרה','🎃'],['star','כוכב קסם','✨'],['none','בלי','🚫']],
+ cinderellaCompanion:[['fairy','פיה טובה','🧚'],['prince','נסיך','🤴'],['mice','חברים קטנים','🐭'],['clock','שעון חצות','🕛'],['coach','כרכרה','🎠'],['none','בלי','🚫']],
+ cinderellaAccessory:[['tiara','כתר זכוכית','👑'],['headband','סרט כחול','🎀'],['sparkles','ניצוצות','✨'],['bow','קשת לשיער','💙'],['none','בלי','🚫']],
+ cinderellaBackdrop:[['ballroom','אולם נשף','🏰'],['stairs','מדרגות הטירה','🪜'],['carriage','כרכרה בלילה','🌙'],['garden','גן קסום','🌹'],['window','חלון וכוכבים','✨']]
 };
+
 function buildChoices(key){
  const node = $(`#${key}Choices`);
+ if(!node) return;
  for(const item of sets[key]){
    const [value,name,icon=value] = item;
    const button = document.createElement('button'); button.type='button'; button.className='choice';
@@ -22,89 +34,31 @@ function buildChoices(key){
    button.dataset.value=value;node.appendChild(button);
  }
 }
-function updateChoices(){for(const key of Object.keys(sets)) for(const b of $(`#${key}Choices`).children){ const active=b.dataset.value===state[key]; b.classList.toggle('active',active); b.setAttribute('aria-pressed',String(active)); }}
+function updateChoices(){
+ for(const key of Object.keys(sets)){
+   const container = $(`#${key}Choices`);
+   if(!container) continue;
+   for(const b of container.children){
+     const active=b.dataset.value===state[key];
+     b.classList.toggle('active',active);
+     b.setAttribute('aria-pressed',String(active));
+   }
+ }
+}
 Object.keys(sets).forEach(buildChoices);updateChoices();
-
-// === Mermaid World: choices and presets ===
-// Original MediaPipe and camera loading above/below remain unchanged.
-const mermaidSets = {
- hair:[['none','בלי','🚫'],['pink','ורוד','🩷'],['aqua','טורקיז','🩵'],['purple','סגול','💜'],['blue','כחול','💙'],['gold','זהב','💛'],['rainbow','קשת','🌈']],
- crown:[['none','בלי','🚫'],['shells','צדפים','🐚'],['pearls','פנינים','🤍'],['coral','אלמוגים','🪸'],['star','כוכבי ים','⭐']],
- scales:[['none','בלי','🚫'],['pink','ורודים','🩷'],['aqua','טורקיז','🩵'],['purple','סגולים','💜'],['gold','זהב','💛'],['rainbow','קשת','🌈']],
- gem:[['none','בלי','🚫'],['pearl','פנינה','🤍'],['diamond','יהלום','💎'],['star','כוכב','⭐'],['shell','צדף','🐚']],
- necklace:[['none','בלי','🚫'],['pearls','פנינים','🤍'],['shells','צדפים','🐚'],['coral','אלמוגים','🪸'],['stars','כוכבים','⭐']],
- bubbles:[['none','בלי','🚫'],['bubbles','בועות','🫧'],['sparkles','נצנצים','✨'],['hearts','לבבות','💖'],['stars','כוכבים','🌟']],
- friend:[['none','בלי','🚫'],['dolphin','דולפין','🐬'],['turtle','צב ים','🐢'],['fish','דגים','🐠'],['jelly','מדוזה','🪼'],['crab','סרטן','🦀']],
- tail:[['none','בלי','🚫'],['pink','ורוד','🩷'],['aqua','טורקיז','🩵'],['purple','סגול','💜'],['gold','זהב','💛'],['rainbow','קשת','🌈']],
- tattoos:[['none','בלי','🚫'],['shells','צדפי פנינה','🐚'],['stars','כוכבי ים','⭐'],['pearls','טיפות פנינה','💎'],['coral','אלמוגים','🪸'],['wave','גלי ים','🌊']],
- eyes:[['none','בלי','🚫'],['sparkle','נצנצים','✨'],['aqua','טורקיז','🩵'],['pink','ורוד','🩷'],['purple','סגול','💜']]
-};
-const mermaidPalettes={
- pink:['#f482c6','#ffd1ec','#df4dad'], aqua:['#32c6c5','#b6ffff','#098fbd'],
- purple:['#a879ed','#e2caff','#704bd4'],blue:['#609cf8','#b6d5ff','#287bd3'],
- gold:['#f1bd55','#fff0a6','#cf8c1b'],rainbow:['#6bc9e5','#ff9dcf','#d193ef']
-};
-const mermaidPresets={
- pink:{hair:'pink',crown:'shells',scales:'pink',gem:'pearl',necklace:'pearls',bubbles:'bubbles',friend:'dolphin',tail:'pink',eyes:'sparkle',tattoos:'shells'},
- ocean:{hair:'aqua',crown:'pearls',scales:'aqua',gem:'diamond',necklace:'shells',bubbles:'sparkles',friend:'turtle',tail:'aqua',eyes:'aqua',tattoos:'wave'},
- purple:{hair:'purple',crown:'star',scales:'purple',gem:'diamond',necklace:'stars',bubbles:'hearts',friend:'jelly',tail:'purple',eyes:'purple',tattoos:'stars'}
-};
-function updateMermaidChoices(){
- for(const key of Object.keys(mermaidSets)){
-   for(const button of $(`#mermaid${key[0].toUpperCase()+key.slice(1)}Choices`).children){
-     const active=state.mermaid[key]===button.dataset.value;
-     button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));
-   }
- }
- for(const button of document.querySelectorAll('[data-preset]')){
-   const selected=Object.entries(mermaidPresets[button.dataset.preset]).every(([k,v])=>state.mermaid[k]===v);
-   button.classList.toggle('active',selected);button.setAttribute('aria-pressed',String(selected));
- }
-}
-function buildMermaidChoices(){
- for(const [key,values] of Object.entries(mermaidSets)){
-   const node=$(`#mermaid${key[0].toUpperCase()+key.slice(1)}Choices`);
-   for(const [value,name,icon] of values){
-     const button=document.createElement('button');button.type='button';button.className='choice';
-     button.dataset.value=value;button.setAttribute('aria-label',name);
-     const symbol=document.createElement('span');symbol.className='emoji';symbol.setAttribute('aria-hidden','true');symbol.textContent=icon;
-     const label=document.createElement('span');label.className='name';label.textContent=name;
-     button.append(symbol,label);
-     button.addEventListener('click',()=>{state.mermaid[key]=value;updateMermaidChoices();});
-     node.appendChild(button);
-   }
- }
- updateMermaidChoices();
-}
-function setMode(mode){
- state.mode=mode;
- const classic=mode==='classic';
- $('#classicTab').hidden=!classic;$('#mermaidTab').hidden=classic;
- for(const [button,active] of [['#classicTabButton',classic],['#mermaidTabButton',!classic]]){
-   $(button).classList.toggle('active',active);$(button).setAttribute('aria-selected',String(active));
- }
- // Clear stale face results only if camera flips; tab changes retain camera stream.
-}
-$('#classicTabButton').addEventListener('click',()=>setMode('classic'));
-$('#mermaidTabButton').addEventListener('click',()=>setMode('mermaid'));
-$('#mermaidPresets').addEventListener('click',(event)=>{
- const button=event.target.closest('[data-preset]');
- if(!button)return;
- Object.assign(state.mermaid,mermaidPresets[button.dataset.preset]);updateMermaidChoices();
-});
-$('#mermaidAllButton').addEventListener('click',()=>{
- Object.assign(state.mermaid,mermaidPresets.ocean);
- // All nine categories are now enabled. The child can customize each one afterward.
- updateMermaidChoices();
-});
-$('#mermaidClearButton').addEventListener('click',()=>{
- for(const key of Object.keys(mermaidSets))state.mermaid[key]='none';
- updateMermaidChoices();
-});
-buildMermaidChoices();
-
 function status(text){$('#status').textContent=text;}
-// Version 3: load a real MediaPipe bundle, with CDN fallback and readable diagnostics.
+
+$$('.tab-button').forEach(button=>button.addEventListener('click',()=>setTab(button.dataset.tab)));
+function setTab(tab){
+  state.activeTab = tab;
+  $$('.tab-button').forEach(b=>{
+    const active = b.dataset.tab===tab;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-selected', String(active));
+  });
+  $$('.tab-page').forEach(p=>p.classList.toggle('active', p.dataset.page===tab));
+}
+
 let loadingModel = false;
 function showModelError(err) {
  const message = String(err?.message || err || 'שגיאה לא ידועה');
@@ -124,9 +78,7 @@ async function makeLandmarker() {
    {base:'https://unpkg.com/@mediapipe/tasks-vision@0.10.22', version:'0.10.22'},
    {base:'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21', version:'0.10.21'}
  ];
- const modelUrls = [
-   'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'
- ];
+ const modelUrls = ['https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'];
  const errors = [];
  try {
    for(const source of sources) {
@@ -154,10 +106,7 @@ async function makeLandmarker() {
    throw new Error(errors.join(' | ') || 'לא ניתן לטעון את קובצי MediaPipe');
  } finally {loadingModel = false;}
 }
-async function loadFaceModel() {
- try { await makeLandmarker(); }
- catch(err) {showModelError(err);}
-}
+async function loadFaceModel() { try { await makeLandmarker(); } catch(err) { showModelError(err); } }
 function cameraErrorMessage(err){
  if(!window.isSecureContext) return 'יש לפתוח את האתר בכתובת HTTPS של GitHub Pages (לא כקובץ מקומי).';
  if(err?.name==='NotAllowedError'||err?.name==='PermissionDeniedError') return 'הגישה למצלמה נחסמה. לחצי על סמל המנעול ליד כתובת האתר, אפשרי מצלמה ורענני את הדף.';
@@ -178,41 +127,104 @@ async function startCamera(){
    status('המצלמה פועלת! טוענת זיהוי פנים... ✨');
    await loadFaceModel();
  }catch(err){
-    console.error('Camera start failed',err);
-    const message=cameraErrorMessage(err);
-    status(message);
-    alert(message);
-    start.disabled=false;
+   console.error('Camera start failed',err);
+   const message=cameraErrorMessage(err);
+   status(message); alert(message); start.disabled=false;
  }
 }
 async function openCamera(){
- stopTracks();
- let stream;
+ stopTracks(); let stream;
  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:state.facing},width:{ideal:960},height:{ideal:1280}},audio:false});}
  catch(err){if(err.name==='OverconstrainedError')stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});else throw err;}
- state.stream=stream;VIDEO.srcObject=stream;
- await VIDEO.play();
+ state.stream=stream; VIDEO.srcObject=stream; await VIDEO.play();
  if(!VIDEO.videoWidth){await new Promise((resolve,reject)=>{ const t=setTimeout(()=>reject(new Error('המצלמה לא מספקת תמונה')),8000); VIDEO.addEventListener('loadedmetadata',()=>{clearTimeout(t);resolve();},{once:true}); });}
- CANVAS.width=VIDEO.videoWidth;CANVAS.height=VIDEO.videoHeight;
- state.result=null;state.timestamp=-1;
+ CANVAS.width=VIDEO.videoWidth; CANVAS.height=VIDEO.videoHeight;
+ state.result=null; state.timestamp=-1;
 }
 function stopTracks(){state.stream?.getTracks().forEach(t=>t.stop());state.stream=null;}
 function point(lm,index){const p=lm[index];return {x:p.x*CANVAS.width,y:p.y*CANVAS.height};}
 function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function emoji(text,x,y,size,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.textAlign='center';CTX.textBaseline='middle';CTX.font=`${Math.round(size)}px "Apple Color Emoji","Segoe UI Emoji",sans-serif`;CTX.fillText(text,0,0);CTX.restore();}
-function drawFace(lm,smile,index){
+function glowCircle(x,y,r,fill){CTX.beginPath();CTX.arc(x,y,r,0,Math.PI*2);CTX.fillStyle=fill;CTX.fill();}
+function drawGlassSlipper(x,y,s,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.scale(s,s);CTX.beginPath();CTX.moveTo(-0.9,0.25);CTX.quadraticCurveTo(-0.15,-0.35,0.72,-0.22);CTX.quadraticCurveTo(0.98,-0.12,1.0,0.15);CTX.quadraticCurveTo(0.75,0.26,0.52,0.55);CTX.quadraticCurveTo(0.28,0.75,-0.18,0.72);CTX.quadraticCurveTo(-0.55,0.67,-0.92,0.44);CTX.closePath();CTX.fillStyle='rgba(179,231,255,0.55)';CTX.fill();CTX.lineWidth=0.08;CTX.strokeStyle='rgba(255,255,255,0.95)';CTX.stroke();CTX.beginPath();CTX.moveTo(-0.15,0.15);CTX.lineTo(0.4,0.08);CTX.strokeStyle='rgba(210,247,255,0.9)';CTX.stroke();CTX.restore();}
+function drawDressIcon(x,y,s,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.scale(s,s);CTX.fillStyle='#8bc0ff';CTX.beginPath();CTX.moveTo(0,-1);CTX.lineTo(0.35,-0.65);CTX.lineTo(0.68,0.8);CTX.quadraticCurveTo(0,1.22,-0.68,0.8);CTX.lineTo(-0.35,-0.65);CTX.closePath();CTX.fill();CTX.beginPath();CTX.arc(0,-1.17,0.18,0,Math.PI*2);CTX.fillStyle='#ffe2bf';CTX.fill();CTX.strokeStyle='rgba(255,255,255,.95)';CTX.lineWidth=0.08;CTX.stroke();CTX.beginPath();CTX.moveTo(-0.18,-0.72);CTX.lineTo(0.18,-0.72);CTX.stroke();CTX.restore();}
+function drawWand(x,y,s,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.scale(s,s);CTX.strokeStyle='#f8d36a';CTX.lineWidth=0.13;CTX.beginPath();CTX.moveTo(-0.65,0.75);CTX.lineTo(0.28,-0.18);CTX.stroke();for(let i=0;i<5;i++){const a=-Math.PI/2+i*(Math.PI*2/5);CTX.beginPath();CTX.moveTo(Math.cos(a)*0.12,Math.sin(a)*0.12-0.45);CTX.lineTo(Math.cos(a+Math.PI/5)*0.46,Math.sin(a+Math.PI/5)*0.46-0.45);CTX.lineTo(Math.cos(a+2*Math.PI/5)*0.12,Math.sin(a+2*Math.PI/5)*0.12-0.45);CTX.closePath();CTX.fillStyle=i%2?'#fff4a6':'#ffe284';CTX.fill();}CTX.restore();}
+function drawPrinceBadge(x,y,s,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.scale(s,s);CTX.fillStyle='#315ab8';CTX.fillRect(-0.28,-0.6,0.56,1.0);CTX.fillStyle='#d9ecff';CTX.fillRect(-0.08,-0.55,0.16,0.9);CTX.beginPath();CTX.arc(0,-0.9,0.24,0,Math.PI*2);CTX.fillStyle='#ffd9bf';CTX.fill();CTX.fillStyle='#f2d469';CTX.beginPath();CTX.moveTo(-0.4,-1.23);CTX.lineTo(-0.16,-1.0);CTX.lineTo(0,-1.22);CTX.lineTo(0.16,-1.0);CTX.lineTo(0.4,-1.23);CTX.lineTo(0.28,-0.88);CTX.lineTo(-0.28,-0.88);CTX.closePath();CTX.fill();CTX.restore();}
+function drawClock(x,y,s,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.scale(s,s);CTX.beginPath();CTX.arc(0,0,1,0,Math.PI*2);CTX.fillStyle='rgba(255,247,205,.95)';CTX.fill();CTX.lineWidth=0.1;CTX.strokeStyle='#d8b45d';CTX.stroke();for(let i=0;i<12;i++){const a=i*Math.PI/6;CTX.beginPath();CTX.moveTo(Math.cos(a)*0.72,Math.sin(a)*0.72);CTX.lineTo(Math.cos(a)*0.88,Math.sin(a)*0.88);CTX.stroke();}CTX.lineWidth=0.12;CTX.beginPath();CTX.moveTo(0,0);CTX.lineTo(0,-0.48);CTX.moveTo(0,0);CTX.lineTo(0.34,0);CTX.strokeStyle='#61517c';CTX.stroke();CTX.restore();}
+function drawCoach(x,y,s,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.scale(s,s);CTX.beginPath();CTX.arc(0,0,0.56,0,Math.PI*2);CTX.fillStyle='rgba(244,181,72,.94)';CTX.fill();CTX.beginPath();CTX.moveTo(-0.25,-0.1);CTX.quadraticCurveTo(0,-0.65,0.25,-0.1);CTX.lineWidth=0.09;CTX.strokeStyle='#fff5d1';CTX.stroke();glowCircle(-0.45,0.56,0.18,'#f1d284');glowCircle(0.45,0.56,0.18,'#f1d284');CTX.strokeStyle='#ad6a15';CTX.lineWidth=0.08;CTX.strokeRect(-0.26,-0.08,0.52,0.45);CTX.restore();}
+function drawTiara(x,y,s,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.scale(s,s);CTX.beginPath();CTX.moveTo(-1,0.42);CTX.quadraticCurveTo(-0.55,-0.22,-0.26,0.12);CTX.quadraticCurveTo(0,-0.52,0.26,0.12);CTX.quadraticCurveTo(0.55,-0.22,1,0.42);CTX.lineTo(1,0.72);CTX.lineTo(-1,0.72);CTX.closePath();CTX.fillStyle='rgba(171,226,255,0.75)';CTX.fill();CTX.strokeStyle='rgba(255,255,255,0.95)';CTX.lineWidth=0.08;CTX.stroke();glowCircle(0,-0.1,0.12,'#f9f7ff');glowCircle(-0.55,0.1,0.08,'#d6f2ff');glowCircle(0.55,0.1,0.08,'#d6f2ff');CTX.restore();}
+function drawHeadband(x,y,s,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.scale(s,s);CTX.beginPath();CTX.arc(0,0,1.1,Math.PI*1.05,Math.PI*1.95);CTX.lineWidth=0.2;CTX.strokeStyle='#78aaf8';CTX.stroke();CTX.restore();}
+function drawSparkles(x,y,s,count=7){CTX.save();CTX.translate(x,y);for(let i=0;i<count;i++){const a=i*(Math.PI*2/count)+performance.now()/1100;const px=Math.cos(a)*s*(0.55+0.12*(i%2));const py=Math.sin(a)*s*(0.35+0.11*(i%3));CTX.save();CTX.translate(px,py);CTX.rotate(a);CTX.fillStyle=i%2?'rgba(255,245,176,.95)':'rgba(218,240,255,.95)';for(let j=0;j<4;j++){CTX.beginPath();CTX.moveTo(0,-s*0.11);CTX.lineTo(s*0.03,0);CTX.lineTo(0,s*0.11);CTX.lineTo(-s*0.03,0);CTX.closePath();CTX.fill();CTX.rotate(Math.PI/2);}CTX.restore();}CTX.restore();}
+function drawBackdrop(name,w,h){
+  CTX.save();
+  if(name==='ballroom'){
+    const g=CTX.createLinearGradient(0,0,0,h); g.addColorStop(0,'rgba(106,80,182,.30)'); g.addColorStop(1,'rgba(245,225,255,.18)'); CTX.fillStyle=g; CTX.fillRect(0,0,w,h);
+    CTX.fillStyle='rgba(255,255,255,.18)'; for(let i=0;i<4;i++){CTX.fillRect(w*(0.08+i*0.22),h*0.12,w*0.08,h*0.44);} 
+    CTX.fillStyle='rgba(72,46,120,.22)'; CTX.fillRect(0,h*0.84,w,h*0.16);
+  } else if(name==='stairs'){
+    CTX.fillStyle='rgba(196,220,255,.20)'; CTX.fillRect(0,0,w,h);
+    CTX.fillStyle='rgba(255,255,255,.18)'; for(let i=0;i<8;i++){CTX.fillRect(w*0.12,h*(0.88-i*0.055),w*0.76,h*0.03);} 
+    CTX.strokeStyle='rgba(214,233,255,.35)'; CTX.lineWidth=4; CTX.beginPath(); CTX.moveTo(w*0.16,h*0.87); CTX.lineTo(w*0.03,h*0.28); CTX.moveTo(w*0.84,h*0.87); CTX.lineTo(w*0.97,h*0.28); CTX.stroke();
+  } else if(name==='carriage'){
+    const g=CTX.createLinearGradient(0,0,0,h); g.addColorStop(0,'rgba(33,53,120,.42)'); g.addColorStop(1,'rgba(122,84,200,.16)'); CTX.fillStyle=g; CTX.fillRect(0,0,w,h);
+    glowCircle(w*0.82,h*0.18,h*0.06,'rgba(255,248,210,.45)');
+    for(let i=0;i<18;i++){glowCircle((i*139)%w,((i*77)%Math.floor(h*0.55))+12,1.6+(i%3),'rgba(255,255,255,.8)');}
+    CTX.fillStyle='rgba(25,18,64,.35)'; CTX.fillRect(0,h*0.87,w,h*0.13);
+    drawCoach(w*0.18,h*0.79,h*0.05,0);
+  } else if(name==='garden'){
+    const g=CTX.createLinearGradient(0,0,0,h); g.addColorStop(0,'rgba(255,226,241,.25)'); g.addColorStop(1,'rgba(128,193,148,.18)'); CTX.fillStyle=g; CTX.fillRect(0,0,w,h);
+    for(let i=0;i<9;i++){glowCircle((i*97)%w,h*0.93,h*0.07,'rgba(101,173,97,.22)'); glowCircle(((i*97)+24)%w,h*0.88,h*0.025,'rgba(255,148,180,.38)');}
+  } else if(name==='window'){
+    const g=CTX.createLinearGradient(0,0,0,h); g.addColorStop(0,'rgba(43,62,130,.35)'); g.addColorStop(1,'rgba(174,214,255,.12)'); CTX.fillStyle=g; CTX.fillRect(0,0,w,h);
+    CTX.strokeStyle='rgba(234,247,255,.35)'; CTX.lineWidth=5; CTX.strokeRect(w*0.16,h*0.10,w*0.68,h*0.36); CTX.beginPath(); CTX.moveTo(w*0.50,h*0.10); CTX.lineTo(w*0.50,h*0.46); CTX.moveTo(w*0.16,h*0.28); CTX.lineTo(w*0.84,h*0.28); CTX.stroke();
+    for(let i=0;i<15;i++){glowCircle((i*61)%Math.floor(w*0.62)+w*0.19,((i*47)%Math.floor(h*0.26))+h*0.14,1.8+(i%2),'rgba(255,255,255,.82)');}
+  }
+  CTX.restore();
+}
+function drawCinderellaTattoo(kind,x,y,s,angle){
+  if(kind==='slipper') return drawGlassSlipper(x,y,s,angle);
+  if(kind==='dress') return drawDressIcon(x,y,s,angle);
+  if(kind==='fairy') return drawWand(x,y,s,angle);
+  if(kind==='prince') return drawPrinceBadge(x,y,s,angle);
+  if(kind==='clock') return drawClock(x,y,s,angle);
+  if(kind==='coach') return drawCoach(x,y,s,angle);
+  if(kind==='star') return drawSparkles(x,y,s,6);
+}
+function drawCompanion(kind,anchorX,anchorY,s,tilt){
+  if(kind==='fairy'){ drawWand(anchorX,anchorY,s*0.65,tilt-0.45); emoji('🧚',anchorX+s*0.24,anchorY-s*0.18,s*0.62,0); }
+  if(kind==='prince'){ drawPrinceBadge(anchorX,anchorY,s*0.42,0); }
+  if(kind==='mice'){ emoji('🐭',anchorX-s*0.15,anchorY,s*0.48,0); emoji('🐭',anchorX+s*0.18,anchorY+s*0.04,s*0.38,0); }
+  if(kind==='clock'){ drawClock(anchorX,anchorY,s*0.36,0); }
+  if(kind==='coach'){ drawCoach(anchorX,anchorY,s*0.34,0); }
+}
+function drawCinderellaFace(lm,smile,index){
+ const left=point(lm,234),right=point(lm,454),top=point(lm,10),chin=point(lm,152),eyeL=point(lm,33),eyeR=point(lm,263),mouth=point(lm,13);
+ const faceW=distance(left,right), faceH=distance(top,chin);
+ const tilt=Math.atan2(eyeR.y-eyeL.y,eyeR.x-eyeL.x);
+ const cheekA=point(lm,205), cheekB=point(lm,425), forehead=point(lm,151);
+ const tattooTargets=[cheekA, cheekB, forehead];
+ if(state.cinderellaTattoo!=='none') tattooTargets.forEach((p,idx)=>drawCinderellaTattoo(state.cinderellaTattoo,p.x+(idx===2?0:idx===0?-faceW*0.02:faceW*0.02),p.y-(idx===2?faceH*0.01:0),Math.max(16,faceW*0.12),tilt));
+ const centerX=(eyeL.x+eyeR.x)/2,centerY=(eyeL.y+eyeR.y)/2;
+ if(state.cinderellaAccessory==='tiara') drawTiara(top.x,top.y-faceH*0.12,faceW*0.32,tilt);
+ if(state.cinderellaAccessory==='headband') drawHeadband(top.x,top.y-faceH*0.03,faceW*0.25,tilt);
+ if(state.cinderellaAccessory==='bow') emoji('💙',top.x-faceW*0.23,top.y-faceH*0.10,faceW*0.16,tilt);
+ if(state.cinderellaAccessory==='sparkles') drawSparkles(top.x,top.y-faceH*0.11,faceW*0.22,7);
+ drawDressIcon(centerX,chin.y+faceH*0.15,faceW*0.24,0);
+ if(state.cinderellaCompanion!=='none') drawCompanion(state.cinderellaCompanion,left.x-faceW*0.24,chin.y-faceH*0.02,faceW*0.34,tilt);
+ if(smile){ drawSparkles(right.x+faceW*0.16,top.y-faceH*0.02,faceW*0.17,5); }
+ drawGlassSlipper(mouth.x+faceW*0.28, chin.y+faceH*0.06, faceW*0.08, tilt*0.2);
+}
+function drawMagicFace(lm,smile,index){
  const left=point(lm,234),right=point(lm,454),top=point(lm,10),chin=point(lm,152),eyeL=point(lm,33),eyeR=point(lm,263);
  const faceW=distance(left,right), faceH=distance(top,chin);
  const tilt=Math.atan2(eyeR.y-eyeL.y,eyeR.x-eyeL.x);
  const cheekA=point(lm,205),cheekB=point(lm,425);
  const cheeks=state.position==='both'?[cheekA,cheekB]:state.position==='forehead'?[point(lm,151)]:[state.position==='right'?cheekA:cheekB];
- if(state.tattoo!=='none')cheeks.forEach(p=>emoji(state.tattoo,p.x,p.y,Math.max(21,faceW*(state.position==='forehead'?.23:.20)),tilt));
+ if(state.tattoo!=='none') cheeks.forEach(p=>emoji(state.tattoo,p.x,p.y,Math.max(21,faceW*(state.position==='forehead'?.23:.20)),tilt));
  const centerX=(eyeL.x+eyeR.x)/2,centerY=(eyeL.y+eyeR.y)/2;
  if(state.accessory==='👑')emoji('👑',top.x,top.y-faceH*.13,faceW*.7,tilt);
  if(state.accessory==='😎')emoji('🕶️',centerX,centerY,faceW*.92,tilt);
- if(state.accessory==='🐱'){
-  emoji('🐱',top.x,top.y-faceH*.17,faceW*.66,tilt);
- }
+ if(state.accessory==='🐱') emoji('🐱',top.x,top.y-faceH*.17,faceW*.66,tilt);
  if(state.accessory==='🎀')emoji('🎀',top.x-faceW*.24,top.y-faceH*.09,faceW*.38,tilt);
  if(state.accessory==='🥸')emoji('〰️',point(lm,13).x,point(lm,13).y-faceH*.075,faceW*.46,tilt);
  if(smile && state.smile!=='none'){
@@ -224,273 +236,34 @@ function drawFace(lm,smile,index){
    }
  }
 }
-
-// === Mermaid canvas effects, anchored to the same face landmarks as the original effects ===
-function mermaidGradient(x0,y0,x1,y1,colors){
- const gradient=CTX.createLinearGradient(x0,y0,x1,y1);
- gradient.addColorStop(0,colors[0]);gradient.addColorStop(.53,colors[1]);gradient.addColorStop(1,colors[2]);
- return gradient;
-}
-// Layered hand-drawn hair: deep base, curled locks, translucent highlights and fine strands.
-function mermaidHair(top,faceW,faceH,tilt,kind){
- if(kind==='none')return;
- const c=mermaidPalettes[kind]||mermaidPalettes.pink;
- const hairColors=kind==='rainbow'?['#39bfc2','#ff87c4','#a174df']:c;
- CTX.save();CTX.translate(top.x,top.y);CTX.rotate(tilt);
- const w=faceW,h=faceH;
- const grad=CTX.createLinearGradient(-w*.67,-h*.42,w*.7,h*.93);
- grad.addColorStop(0,hairColors[2]);grad.addColorStop(.30,hairColors[0]);grad.addColorStop(.60,hairColors[1]);grad.addColorStop(1,hairColors[2]);
- // Side hair is drawn as several locks with tapered ends, not rectangular bands.
- for(const side of [-1,1]){
-   for(let layer=3;layer>=0;layer--){
-     const x=side*w*(.42+layer*.046), end=side*w*(.49+layer*.060);
-     const spread=h*(.68+layer*.095);
-     CTX.beginPath();CTX.moveTo(x,-h*.18);
-     CTX.bezierCurveTo(x+side*w*.21,h*.10,x-side*w*.105,h*.43,end,spread);
-     CTX.bezierCurveTo(end-side*w*.055,spread+h*.14,end-side*w*.12,spread+h*.12,end-side*w*.15,spread+h*.035);
-     CTX.bezierCurveTo(end-side*w*.18,spread-h*.16,x-side*w*.13,h*.22,x-side*w*.075,-h*.17);
-     CTX.closePath();CTX.fillStyle=grad;CTX.globalAlpha=.94-layer*.035;CTX.fill();
-     CTX.beginPath();CTX.moveTo(x-side*w*.038,-h*.13);
-     CTX.bezierCurveTo(x+side*w*.12,h*.14,x-side*w*.18,h*.48,end-side*w*.095,spread+h*.012);
-     CTX.strokeStyle=hairColors[1];CTX.lineWidth=Math.max(1.1,w*(.014-layer*.001));CTX.globalAlpha=.40;CTX.stroke();
-   }
- }
- // Voluminous hairline, split fringe, keeping forehead, eyes and mouth visible.
- CTX.globalAlpha=.98;
- CTX.beginPath();CTX.moveTo(-w*.55,h*.025);
- CTX.bezierCurveTo(-w*.71,-h*.24,-w*.47,-h*.53,-w*.17,-h*.49);
- CTX.bezierCurveTo(w*.12,-h*.60,w*.52,-h*.48,w*.58,-h*.08);
- CTX.bezierCurveTo(w*.62,h*.04,w*.57,h*.095,w*.47,h*.12);
- CTX.bezierCurveTo(w*.32,-h*.11,w*.12,-h*.17,-w*.01,-h*.09);
- CTX.bezierCurveTo(-w*.20,h*.045,-w*.41,-h*.08,-w*.55,h*.025);
- CTX.fillStyle=grad;CTX.fill();
- for(let k=0;k<9;k++){
-   const x=-w*.43+k*w*.105;
-   CTX.beginPath();CTX.moveTo(x,-h*(.30+.095*Math.sin(k*.55)));
-   CTX.quadraticCurveTo(x+w*.085,-h*.32,x+w*.10,-h*(.15+.025*Math.cos(k)));
-   CTX.strokeStyle=k%3===0?'#ffffff':hairColors[1];CTX.globalAlpha=k%3===0?.27:.42;
-   CTX.lineWidth=Math.max(1,w*(k%3===0?.010:.007));CTX.stroke();
- }
- CTX.restore();
-}
-
-// Pearlescent seashell and star shapes drawn as vector art, not emoji glyphs.
-function shellShape(x,y,size,angle=0,color='#ffd7ed'){
- CTX.save();CTX.translate(x,y);CTX.rotate(angle);
- const r=size/2;const g=CTX.createRadialGradient(-r*.28,-r*.34,r*.08,0,0,r*1.3);
- g.addColorStop(0,'#fffdf8');g.addColorStop(.42,color);g.addColorStop(1,'#b56eac');
- CTX.beginPath();CTX.moveTo(0,r*.72);
- CTX.bezierCurveTo(-r*.24,r*.20,-r*1.0,r*.13,-r*.88,-r*.53);
- CTX.bezierCurveTo(-r*.61,-r*1.16,r*.63,-r*1.16,r*.89,-r*.53);
- CTX.bezierCurveTo(r*1.0,r*.14,r*.24,r*.20,0,r*.72);
- CTX.closePath();CTX.fillStyle=g;CTX.fill();CTX.strokeStyle='#fff8f4';CTX.lineWidth=Math.max(1,r*.065);CTX.stroke();
- for(let a=-2;a<=2;a++){
-  CTX.beginPath();CTX.moveTo(0,r*.66);CTX.quadraticCurveTo(a*r*.20,-r*.23,a*r*.36,-r*.79);
-  CTX.strokeStyle='rgba(255,255,255,.64)';CTX.lineWidth=Math.max(1,r*.055);CTX.stroke();
- }
- CTX.beginPath();CTX.ellipse(0,r*.60,r*.16,r*.11,0,0,Math.PI*2);CTX.fillStyle='#fff3d0';CTX.fill();CTX.restore();
-}
-function pearl(x,y,r){
- const g=CTX.createRadialGradient(x-r*.37,y-r*.42,0,x,y,r);
- g.addColorStop(0,'#fff');g.addColorStop(.36,'#fffaf7');g.addColorStop(.75,'#eacbed');g.addColorStop(1,'#a685ba');
- CTX.beginPath();CTX.arc(x,y,r,0,Math.PI*2);CTX.fillStyle=g;CTX.fill();
- CTX.lineWidth=Math.max(1,r*.09);CTX.strokeStyle='rgba(255,255,255,.7)';CTX.stroke();
-}
-function seaStar(x,y,r,fill='#f9b6d5'){
- CTX.save();CTX.translate(x,y);CTX.beginPath();
- for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.43:r;const xx=Math.cos(a)*rr,yy=Math.sin(a)*rr;if(!i)CTX.moveTo(xx,yy);else CTX.lineTo(xx,yy);}
- CTX.closePath();CTX.fillStyle=fill;CTX.fill();CTX.strokeStyle='#fff1d9';CTX.lineWidth=Math.max(1,r*.13);CTX.stroke();
- pearl(0,-r*.08,r*.17);CTX.restore();
-}
-function mermaidCrown(top,faceW,faceH,tilt,kind){
- if(kind==='none')return;
- CTX.save();CTX.translate(top.x,top.y-faceH*.28);CTX.rotate(tilt);
- const w=faceW,h=faceH;
- // Tiara band that follows the hairline.
- const metal=CTX.createLinearGradient(-w*.50,0,w*.50,0);metal.addColorStop(0,'#ac7296');metal.addColorStop(.35,'#fff6d8');metal.addColorStop(.62,'#ffe4bb');metal.addColorStop(1,'#a76c92');
- CTX.beginPath();CTX.moveTo(-w*.46,h*.085);CTX.quadraticCurveTo(0,-h*.12,w*.46,h*.085);
- CTX.strokeStyle=metal;CTX.lineWidth=Math.max(4,w*.044);CTX.lineCap='round';CTX.stroke();
- CTX.beginPath();CTX.moveTo(-w*.42,h*.10);CTX.quadraticCurveTo(0,-h*.08,w*.42,h*.10);
- CTX.strokeStyle='rgba(255,255,255,.85)';CTX.lineWidth=Math.max(1,w*.010);CTX.stroke();
- for(let i=-2;i<=2;i++){
-   let x=i*w*.18,y=h*(.018+.045*Math.abs(i));let size=w*(i===0?.36:.235);
-   if(kind==='coral'){
-     CTX.beginPath();CTX.moveTo(x,y+h*.08);CTX.bezierCurveTo(x-w*.045,y-h*.17,x+w*.08,y-h*.22,x,y-h*.28);
-     CTX.strokeStyle='#f38f9f';CTX.lineWidth=w*.045;CTX.stroke();
-     seaStar(x,y-h*.16,w*.085,'#ffb7a0');
-   }else if(kind==='star')seaStar(x,y-h*.10,size*.46,i===0?'#ffd190':'#ffaccb');
-   else if(kind==='pearls'){
-     pearl(x,y-h*.11,w*(i===0?.105:.072));
-     pearl(x,y+h*.022,w*.035);
-   }else shellShape(x,y-h*.07,size,i*.16,i===0?'#ffe0ed':'#e9d5fc');
- }
- pearl(0,h*.11,w*.058);CTX.restore();
-}
-function mermaidTattoo(cheek,faceW,tilt,kind,side){
- if(kind==='none')return;
- CTX.save();CTX.translate(cheek.x,cheek.y+faceW*.06);CTX.rotate(tilt+side*.11);
- const r=faceW*.12;
- for(let i=0;i<3;i++){
-   const x=(i-1)*r*.9,y=-Math.abs(i-1)*r*.28;
-   if(kind==='shells')shellShape(x,y,r*.82,side*.18,'#f8cce9');
-   else if(kind==='stars')seaStar(x,y,r*.44,i===1?'#ffd4a3':'#fbc0df');
-   else if(kind==='pearls')pearl(x,y,r*(i===1?.29:.20));
-   else if(kind==='coral'){
-     CTX.strokeStyle=i===1?'#ff9aad':'#9fd5ca';CTX.lineWidth=Math.max(2,r*.09);CTX.lineCap='round';
-     CTX.beginPath();CTX.moveTo(x,y+r*.34);CTX.quadraticCurveTo(x-r*.36,y-r*.22,x-r*.18,y-r*.41);CTX.moveTo(x,y+r*.17);CTX.quadraticCurveTo(x+r*.32,y-r*.10,x+r*.23,y-r*.34);CTX.stroke();
-     pearl(x,y-r*.32,r*.12);
-   }else{
-     CTX.beginPath();CTX.moveTo(x-r*.38,y);CTX.bezierCurveTo(x-r*.14,y-r*.38,x+r*.04,y+r*.25,x+r*.38,y-r*.12);
-     CTX.strokeStyle=i%2?'#b8eef0':'#7dd2da';CTX.lineWidth=Math.max(2,r*.12);CTX.lineCap='round';CTX.stroke();
-   }
- }
- CTX.restore();
-}
-function mermaidScales(cheek,faceW,tilt,kind){
- if(kind==='none')return;
- const palette=mermaidPalettes[kind]||mermaidPalettes.aqua;
- const r=faceW*.067;
- CTX.save();CTX.translate(cheek.x,cheek.y);CTX.rotate(tilt);
- for(let row=0;row<3;row++)for(let col=0;col<4;col++){
-   const x=(col-1.5)*r*.89+(row%2)*r*.4, y=(row-1)*r*.82;
-   CTX.beginPath();CTX.arc(x,y,r*.5,0,Math.PI);
-   CTX.lineWidth=Math.max(1.5,faceW*.013);CTX.strokeStyle=palette[(row+col)%3];CTX.globalAlpha=.82;CTX.stroke();
-   CTX.beginPath();CTX.arc(x,y-r*.1,r*.11,0,Math.PI*2);CTX.fillStyle='#ffffff';CTX.globalAlpha=.65;CTX.fill();
- }
- CTX.restore();
-}
-function mermaidNecklace(chin,faceW,faceH,tilt,kind){
- if(kind==='none')return;
- const small=faceW*.07;
- CTX.save();CTX.translate(chin.x,chin.y);CTX.rotate(tilt);
- CTX.strokeStyle='#d2a8bb';CTX.lineWidth=Math.max(2,faceW*.008);
- CTX.beginPath();CTX.moveTo(-faceW*.43,faceH*.04);
- CTX.quadraticCurveTo(0,faceH*.44,faceW*.43,faceH*.04);CTX.stroke();
- for(let i=0;i<=10;i++){
-   const t=i/10,x=(t-.5)*faceW*.84,y=faceH*(.04+.20*(1-Math.pow(2*t-1,2)));
-   if(kind==='shells'&&i%3===1)emoji('🐚',x,y,small*1.65);
-   else if(kind==='coral'&&i%3===1)emoji('🪸',x,y,small*1.5);
-   else if(kind==='stars'&&i%3===1)emoji('⭐',x,y,small*1.7);
-   else{CTX.beginPath();CTX.arc(x,y,small*.35,0,Math.PI*2);CTX.fillStyle=i%2===0?'#fff6f0':'#ffcef0';CTX.fill();CTX.strokeStyle='#e6adc7';CTX.lineWidth=1.1;CTX.stroke();}
- }
- CTX.restore();
-}
-function mermaidTail(chin,faceW,faceH,tilt,kind){
- if(kind==='none')return;
- const palette=mermaidPalettes[kind]||mermaidPalettes.aqua;
- CTX.save();CTX.translate(chin.x+faceW*.52,chin.y+faceH*.30);CTX.rotate(tilt-.2);
- const w=faceW*.35,h=faceH*.42;
- CTX.globalAlpha=.84;
- // Two iridescent fins attached to a tiny curved sea-tail; decorative, not body tracking.
- CTX.beginPath();CTX.moveTo(0,-h*.32);CTX.quadraticCurveTo(-w*.25,h*.10,0,h*.52);
- CTX.lineWidth=w*.25;CTX.strokeStyle=palette[0];CTX.lineCap='round';CTX.stroke();
- for(const side of [-1,1]){
-   CTX.beginPath();CTX.moveTo(0,h*.36);
-   CTX.bezierCurveTo(side*w*.22,h*.14,side*w*.92,h*.36,side*w*.9,h*.83);
-   CTX.quadraticCurveTo(side*w*.40,h*.98,0,h*.36);
-   CTX.closePath();CTX.fillStyle=mermaidGradient(0,h*.2,side*w,h*.9,[palette[0],palette[1],palette[2]]);CTX.fill();
-   CTX.strokeStyle=palette[2];CTX.lineWidth=w*.024;CTX.stroke();
- }
- CTX.restore();
-}
-function mermaidBubbles(top,faceW,faceH,index,kind){
- if(kind==='none')return;
- const now=performance.now()/1400;
- for(let i=0;i<9;i++){
-   const angle=i*2.40+index*.4;
-   const x=top.x+Math.sin(angle)*faceW*(.75+(i%3)*.16);
-   const y=top.y+Math.cos(angle)*faceH*.72-((now*.22+i*.14)%1)*faceH*.32;
-   const size=faceW*(.08+(i%3)*.025);
-   if(kind==='bubbles'){
-     CTX.save();CTX.beginPath();CTX.arc(x,y,size*.40,0,Math.PI*2);
-     CTX.fillStyle='rgba(171,244,253,0.16)';CTX.fill();CTX.strokeStyle='rgba(218,255,255,.85)';
-     CTX.lineWidth=Math.max(1.5,faceW*.009);CTX.stroke();CTX.beginPath();CTX.arc(x-size*.1,y-size*.1,size*.10,0,Math.PI*2);CTX.fillStyle='#fff';CTX.fill();CTX.restore();
-   } else {
-     emoji(kind==='sparkles'?'✨':kind==='stars'?'🌟':'💖',x,y,size);
-   }
- }
-}
-function mermaidEyes(lm,faceW,kind){
- if(kind==='none')return;
- const color=kind==='aqua'?'#34e0eb':kind==='pink'?'#f59adb':kind==='purple'?'#b18bf5':'#e8faff';
- for(const idx of [159,386]){
-   const eye=point(lm,idx);
-   CTX.save();CTX.beginPath();CTX.arc(eye.x,eye.y-faceW*.055,faceW*.058,Math.PI*1.13,Math.PI*1.91);
-   CTX.strokeStyle=color;CTX.lineWidth=Math.max(2,faceW*.03);CTX.globalAlpha=.72;CTX.stroke();CTX.restore();
-   if(kind==='sparkle')emoji('✨',eye.x+faceW*.08,eye.y-faceW*.13,faceW*.10);
- }
-}
-function drawMermaidFace(lm,index){
- const top=point(lm,10),chin=point(lm,152),left=point(lm,234),right=point(lm,454);
- const eyeL=point(lm,33),eyeR=point(lm,263);
- const faceW=distance(left,right),faceH=distance(top,chin);
- if(faceW<10||faceH<10)return;
- const tilt=Math.atan2(eyeR.y-eyeL.y,eyeR.x-eyeL.x);
- const selection=state.mermaid;
- mermaidHair(top,faceW,faceH,tilt,selection.hair);
- mermaidScales(point(lm,205),faceW,tilt,selection.scales);
- mermaidScales(point(lm,425),faceW,tilt,selection.scales);
- mermaidEyes(lm,faceW,selection.eyes);
- mermaidCrown(top,faceW,faceH,tilt,selection.crown);
- mermaidTattoo(point(lm,205),faceW,tilt,selection.tattoos,-1);
- mermaidTattoo(point(lm,425),faceW,tilt,selection.tattoos,1);
- if(selection.gem!=='none'){
-   const icons={pearl:'⚪',diamond:'💎',star:'⭐',shell:'🐚'};
-   const gp=point(lm,151); if(selection.gem==='pearl')pearl(gp.x,gp.y+faceH*.09,faceW*.075);else if(selection.gem==='shell')shellShape(gp.x,gp.y+faceH*.09,faceW*.19);else if(selection.gem==='star')seaStar(gp.x,gp.y+faceH*.09,faceW*.09);else emoji(icons[selection.gem],gp.x,gp.y+faceH*.09,faceW*.17,tilt);
- }
- mermaidNecklace(chin,faceW,faceH,tilt,selection.necklace);
- mermaidTail(chin,faceW,faceH,tilt,selection.tail);
- mermaidBubbles(top,faceW,faceH,index,selection.bubbles);
- if(selection.friend!=='none'){
-   const icons={dolphin:'🐬',turtle:'🐢',fish:'🐠',jelly:'🪼',crab:'🦀'};
-   emoji(icons[selection.friend],top.x+faceW*.78,top.y+faceH*.28,faceW*.38,tilt);
- }
-}
-
-function smileDetected(i){const categories=state.result?.faceBlendshapes?.[i]?.categories||[];
- const score=name=>categories.find(c=>c.categoryName===name)?.score||0;
- return (score('mouthSmileLeft')+score('mouthSmileRight'))/2>.33;
-}
+function smileDetected(i){const categories=state.result?.faceBlendshapes?.[i]?.categories||[]; const score=name=>categories.find(c=>c.categoryName===name)?.score||0; return (score('mouthSmileLeft')+score('mouthSmileRight'))/2>.33;}
 function paint(){
  const w=CANVAS.width,h=CANVAS.height;if(!w||!h)return;
  CTX.save();
- // Mirror the selfie view and the saved file consistently.
  if(state.facing==='user'){CTX.translate(w,0);CTX.scale(-1,1);}
  CTX.drawImage(VIDEO,0,0,w,h);
- if(state.result?.faceLandmarks?.length){state.result.faceLandmarks.forEach((lm,i)=>{if(state.mode==='mermaid')drawMermaidFace(lm,i);else drawFace(lm,smileDetected(i),i);});}
+ if(state.activeTab==='cinderella') drawBackdrop(state.cinderellaBackdrop,w,h);
+ if(state.result?.faceLandmarks?.length){
+   state.result.faceLandmarks.forEach((lm,i)=>{
+     if(state.activeTab==='cinderella') drawCinderellaFace(lm,smileDetected(i),i);
+     else drawMagicFace(lm,smileDetected(i),i);
+   });
+ }
  CTX.restore();
 }
-function loop(now){if(!state.running)return;
- if(VIDEO.readyState>=2){
-  if(state.landmarker && VIDEO.currentTime!==state.timestamp && now-state.lastDetection>65){
-   state.lastDetection=now;state.timestamp=VIDEO.currentTime;
-   try{state.result=state.landmarker.detectForVideo(VIDEO,now);}catch(err){console.warn('Frame detection error:',err);}
-  }
-  paint();
-  if(state.landmarker){
-    if(state.result?.faceLandmarks?.length)status('');
-    else status('הציגי את הפנים למצלמה 😊');
-  }
+function loop(now){if(!state.running)return; if(VIDEO.readyState>=2){ if(state.landmarker && VIDEO.currentTime!==state.timestamp && now-state.lastDetection>65){ state.lastDetection=now; state.timestamp=VIDEO.currentTime; try{state.result=state.landmarker.detectForVideo(VIDEO,now);}catch(err){console.warn('Frame detection error:',err);} } paint(); if(state.landmarker){ if(state.result?.faceLandmarks?.length) status(''); else status('הציגי את הפנים למצלמה 😊'); } } requestAnimationFrame(loop);}
+function savePhoto(){ if(!state.running||!CANVAS.width)return; paint(); const filename=`face-magic-${new Date().toISOString().replace(/[:.]/g,'-')}.png`; CANVAS.toBlob(blob=>{ if(!blob){alert('לא ניתן לשמור תמונה במכשיר הזה');return;} const url=URL.createObjectURL(blob); const a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove(); setTimeout(()=>URL.revokeObjectURL(url),30000); status('התמונה נשמרה או הועברה להורדות 📸'); },'image/png'); }
+function clearCurrent(){
+ if(state.activeTab==='cinderella'){
+   state.cinderellaTattoo='none'; state.cinderellaCompanion='none'; state.cinderellaAccessory='none'; state.cinderellaBackdrop='ballroom';
+ } else {
+   state.tattoo='none'; state.accessory='none'; state.smile='none'; state.position='right';
  }
- requestAnimationFrame(loop);
-}
-function savePhoto(){
- if(!state.running||!CANVAS.width)return;
- paint();const filename=`face-magic-${new Date().toISOString().replace(/[:.]/g,'-')}.png`;
- CANVAS.toBlob(blob=>{
-   if(!blob){alert('לא ניתן לשמור תמונה במכשיר הזה');return;}
-   const url=URL.createObjectURL(blob);
-   const a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();
-   setTimeout(()=>URL.revokeObjectURL(url),30000);
-   status('התמונה נשמרה או הועברה להורדות 📸');
- },'image/png');
+ updateChoices();
 }
 $('#startButton').addEventListener('click',startCamera);
 $('#retryButton').addEventListener('click',loadFaceModel);
 $('#saveButton').addEventListener('click',savePhoto);
-$('#switchButton').addEventListener('click',async()=>{
- state.running=false;state.facing=state.facing==='user'?'environment':'user';
- try{await openCamera();state.running=true;requestAnimationFrame(loop);}catch(e){console.error(e);alert('לא הצלחנו להחליף מצלמה');state.facing=state.facing==='user'?'environment':'user';try{await openCamera();state.running=true;requestAnimationFrame(loop);}catch(e2){status('שגיאת מצלמה');}}
-});
-$('#clearButton').addEventListener('click',()=>{if(state.mode==='mermaid'){for(const key of Object.keys(mermaidSets))state.mermaid[key]='none';updateMermaidChoices();}else{state.tattoo='none';state.accessory='none';state.smile='none';updateChoices();}});
+$('#switchButton').addEventListener('click',async()=>{ state.running=false; state.facing=state.facing==='user'?'environment':'user'; try{await openCamera(); state.running=true; requestAnimationFrame(loop);}catch(e){console.error(e); alert('לא הצלחנו להחליף מצלמה'); state.facing=state.facing==='user'?'environment':'user'; try{await openCamera(); state.running=true; requestAnimationFrame(loop);}catch(e2){status('שגיאת מצלמה');}} });
+$('#clearButton').addEventListener('click',clearCurrent);
 window.addEventListener('pagehide',stopTracks);
