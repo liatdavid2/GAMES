@@ -6,11 +6,11 @@
   <meta name="theme-color" content="#8f49d8">
   <meta name="description" content="קסם על הפנים: משחק פילטרים וקעקועים עם מצלמה, לגילאי 6 ומעלה">
   <title>קסם על הפנים ✨</title>
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=mermaid-1">
 </head>
 <body>
   <main class="app">
-    <header><div class="eyebrow">✨ סטודיו הקסמים שלי ✨</div><h1>קסם על הפנים <span>🦋</span></h1><p class="version">גרסה 3 · תיקון זיהוי פנים</p><p>בחרי קסם, חייכי וצלמי!</p></header>
+    <header><div class="eyebrow">✨ סטודיו הקסמים שלי ✨</div><h1>קסם על הפנים <span>🦋</span></h1><p class="version">גרסה 3 + בנות ים · מבוסס על הקבצים שלך</p><p>בחרי קסם, חייכי וצלמי!</p></header>
     <section class="camera-card" aria-label="מצלמה ואפקטים">
       <div class="camera-frame" id="cameraFrame">
         <video id="video" autoplay muted playsinline aria-hidden="true"></video>
@@ -31,12 +31,43 @@
         <button id="clearButton" class="secondary">🧼 נקי קסמים</button>
       </div>
     </section>
-    <section class="panel" aria-label="בחירת קעקוע"><h2>1. בחרי קעקוע 💕</h2><div class="choices" id="tattooChoices"></div></section>
-    <section class="panel" aria-label="בחירת מיקום"><h2>2. איפה הקעקוע? 🎯</h2><div class="choices" id="positionChoices"></div></section>
-    <section class="panel" aria-label="אביזרי פנים"><h2>3. הוסיפי אביזר 👑</h2><div class="choices" id="accessoryChoices"></div></section>
-    <section class="panel" aria-label="תכנות קסם"><h2>4. תכנתִי קסם משלך 🧩</h2><p class="hint">כשאני מחייכת 😄 → יופיעו...</p><div class="choices" id="smileChoices"></div><p class="hint tiny">האפקט מופיע כשיוצרים חיוך מול המצלמה</p></section>
+    <nav class="mode-tabs" role="tablist" aria-label="בחרי עולם קסמים">
+      <button type="button" id="classicTabButton" role="tab" aria-selected="true" aria-controls="classicTab" class="mode-tab active">🦋 קעקועים וקסמים</button>
+      <button type="button" id="mermaidTabButton" role="tab" aria-selected="false" aria-controls="mermaidTab" class="mode-tab">🧜‍♀️ עולם בנות הים</button>
+    </nav>
+    <div id="classicTab" class="tab-page" role="tabpanel" aria-labelledby="classicTabButton">
+      <section class="panel" aria-label="בחירת קעקוע"><h2>1. בחרי קעקוע 💕</h2><div class="choices" id="tattooChoices"></div></section>
+      <section class="panel" aria-label="בחירת מיקום"><h2>2. איפה הקעקוע? 🎯</h2><div class="choices" id="positionChoices"></div></section>
+      <section class="panel" aria-label="אביזרי פנים"><h2>3. הוסיפי אביזר 👑</h2><div class="choices" id="accessoryChoices"></div></section>
+      <section class="panel" aria-label="תכנות קסם"><h2>4. תכנתִי קסם משלך 🧩</h2><p class="hint">כשאני מחייכת 😄 → יופיעו...</p><div class="choices" id="smileChoices"></div><p class="hint tiny">האפקט מופיע כשיוצרים חיוך מול המצלמה</p></section>
+    </div>
+    <div id="mermaidTab" class="tab-page mermaid-page" role="tabpanel" aria-labelledby="mermaidTabButton" hidden>
+      <section class="panel mermaid-intro">
+        <h2>🧜‍♀️ הסטודיו של בנות הים</h2>
+        <p>בחרי בעצמך שיער, צדפים, קשקשים וכל קסם ים! כל הבחירות משתלבות יחד על הפנים.</p>
+        <div class="preset-choices" id="mermaidPresets" aria-label="מראות מוכנים">
+          <button class="preset-button" type="button" data-preset="pink">🩷 בת ים ורודה</button>
+          <button class="preset-button" type="button" data-preset="ocean">🩵 נסיכת האוקיינוס</button>
+          <button class="preset-button" type="button" data-preset="purple">💜 בת ים סגולה</button>
+        </div>
+        <div class="mermaid-actions">
+          <button id="mermaidAllButton" class="primary" type="button">✨ כל הקסמים!</button>
+          <button id="mermaidClearButton" class="secondary" type="button">🫧 הסירי הכול</button>
+        </div>
+      </section>
+      <section class="panel mermaid-group"><h2>1. שיער של בת ים 💇‍♀️</h2><div class="choices" id="mermaidHairChoices"></div></section>
+      <section class="panel mermaid-group"><h2>2. כתר קסום 🐚</h2><div class="choices" id="mermaidCrownChoices"></div></section>
+      <section class="panel mermaid-group"><h2>3. קשקשים על הלחיים 🐟</h2><div class="choices" id="mermaidScalesChoices"></div></section>
+      <section class="panel mermaid-group"><h2>4. פנינה על המצח 💎</h2><div class="choices" id="mermaidGemChoices"></div></section>
+      <section class="panel mermaid-group"><h2>5. שרשרת של ים 📿</h2><div class="choices" id="mermaidNecklaceChoices"></div></section>
+      <section class="panel mermaid-group"><h2>6. בועות ונצנוצים 🫧</h2><div class="choices" id="mermaidBubblesChoices"></div></section>
+      <section class="panel mermaid-group"><h2>7. חברים מהים 🐬</h2><div class="choices" id="mermaidFriendChoices"></div></section>
+      <section class="panel mermaid-group"><h2>8. סנפיר קסום 🧜‍♀️</h2><div class="choices" id="mermaidTailChoices"></div></section>
+      <section class="panel mermaid-group"><h2>9. איפור נוצץ ✨</h2><div class="choices" id="mermaidEyesChoices"></div></section>
+      <p class="mermaid-footnote">📸 לחצי על ״שמור תמונה״ למעלה כדי לשמור את מראה בת הים שבחרת.</p>
+    </div>
     <footer>ללא הרשמה • ללא העלאת תמונות • המצלמה פועלת רק אחרי אישורך<br><span>בעזרת הורה, אפשר לשמור את התמונה ולשלוח לחברות 💌</span></footer>
   </main>
-  <script type="module" src="app.js?v=3"></script>
+  <script type="module" src="app.js?v=mermaid-1"></script>
 </body>
 </html>
