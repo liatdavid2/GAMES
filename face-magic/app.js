@@ -8,7 +8,7 @@ const $$ = s => [...document.querySelectorAll(s)];
 const state = {
   activeTab:'magic',
   tattoo:'🦋', position:'right', accessory:'none', smile:'💖',
-  cinderellaTattoo:'glitter_swirl', cinderellaCompanion:'none', cinderellaAccessory:'tiara', cinderellaDress:'dress_blue', cinderellaPosition:'both',
+  cinderellaTattoo:'glitter_swirl', cinderellaCompanion:'none', cinderellaAccessory:'tiara', cinderellaWings:'wings_blue', cinderellaPosition:'both',
   facing:'user', stream:null, landmarker:null, running:false, result:null, timestamp:-1, frame:0, lastDetection:0
 };
 const sets = {
@@ -19,7 +19,7 @@ const sets = {
  cinderellaTattoo:[['glitter_swirl','נצנצים כחולים','✨'],['castle_tattoo','טירה קסומה','🏰'],['slipper_tattoo','נעל ונצנצים','👠'],['slipper','נעל זכוכית','💎'],['star','כוכבי קסם','⭐'],['none','בלי','🚫']],
  cinderellaCompanion:[['fairy','פיה טובה','🧚'],['prince','נסיך','🤴'],['coach','כרכרה','🎠'],['none','בלי','🚫']],
  cinderellaAccessory:[['tiara','כתר משובץ','👑'],['none','בלי כתר','🚫']],
- cinderellaDress:[['dress_blue','שמלה כחולה','👗'],['none','בלי שמלה','🚫']],
+ cinderellaWings:[['wings_blue','כנפי קריסטל','🪽'],['wings_lilac','כנפי פיה','🦋'],['wings_gold','כנפי זהב','✨'],['none','בלי כנפיים','🚫']],
  cinderellaPosition:[['both','שתי לחיים','💕'],['right','לחי אחת','👉'],['left','לחי שנייה','👈'],['forehead','מצח','🎯']]
 };
 
@@ -30,9 +30,9 @@ function buildChoices(key){
    const [value,name,icon=value] = item;
    const button = document.createElement('button'); button.type='button'; button.className='choice';
    button.setAttribute('aria-label',name);
-   const artKeys=['cinderellaTattoo','cinderellaCompanion','cinderellaAccessory','cinderellaDress'];
+   const artKeys=['cinderellaTattoo','cinderellaCompanion','cinderellaAccessory','cinderellaWings'];
    const artName=artKeys.includes(key) && value!=='none' ? value : null;
-   const ext = ['star','clock','bow'].includes(artName)?'svg':'png';
+   const ext = ['star','clock','bow','wings_blue','wings_lilac','wings_gold'].includes(artName)?'svg':'png';
    button.innerHTML=`<span class="emoji" aria-hidden="true">${artName?`<img src="assets/${artName}.${ext}" alt="">`:icon === 'none'?'🚫':icon}</span><span class="name">${name}</span>`;
    button.addEventListener('click',()=>{state[key]=value; updateChoices();});
    button.dataset.value=value;node.appendChild(button);
@@ -150,11 +150,11 @@ function point(lm,index){const p=lm[index];return {x:p.x*CANVAS.width,y:p.y*CANV
 function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function emoji(text,x,y,size,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.textAlign='center';CTX.textBaseline='middle';CTX.font=`${Math.round(size)}px "Apple Color Emoji","Segoe UI Emoji",sans-serif`;CTX.fillText(text,0,0);CTX.restore();}
 // Images are stored locally in the repository, with transparent backgrounds.
-const assetNames=['tiara','dress_blue','slipper','glitter_swirl','castle_tattoo','slipper_tattoo','fairy','prince','coach','star'];
+const assetNames=['tiara','slipper','glitter_swirl','castle_tattoo','slipper_tattoo','fairy','prince','coach','star','wings_blue','wings_lilac','wings_gold'];
 const assetImages={};
 for(const name of assetNames){
  const img=new Image();
- img.src=`assets/${name}.${name==='star'?'svg':'png'}`;
+ img.src=`assets/${name}.${(['star','wings_blue','wings_lilac','wings_gold'].includes(name)?'svg':'png')}`;
  assetImages[name]=img;
 }
 function drawArt(name,x,y,w,h,angle=0){
@@ -171,18 +171,31 @@ function drawCinderellaFace(lm,smile,index){
  const cheeks=[point(lm,205),point(lm,425)], forehead=point(lm,151);
  const targets=state.cinderellaPosition==='both'?cheeks:state.cinderellaPosition==='forehead'?[forehead]:[cheeks[state.cinderellaPosition==='right'?0:1]];
  if(state.cinderellaTattoo!=='none'){
-   const w=faceW*(state.cinderellaPosition==='forehead'?.28:.35);
+   const w=faceW*(state.cinderellaPosition==='forehead'?.39:.51);
    targets.forEach((p,i)=>drawArt(state.cinderellaTattoo,p.x,p.y,w,0,tilt+(i===1?-.09:.09)));
+ }
+ if(state.cinderellaWings!=='none'){
+   // Decorative paired wings: each wing is outside the face oval, rather than covering eyes.
+   const wingImage=assetImages[state.cinderellaWings];
+   if(wingImage?.complete && wingImage.naturalWidth){
+     const wingH=faceH*1.35, wingW=faceW*0.85;
+     const centerY=(top.y+chin.y)*0.56;
+     CTX.save();
+     CTX.translate(left.x-faceW*.31, centerY);
+     CTX.rotate(tilt*.42);
+     CTX.drawImage(wingImage,-wingW, -wingH*.50, wingW, wingH);
+     CTX.restore();
+     CTX.save();
+     CTX.translate(right.x+faceW*.31, centerY);
+     CTX.rotate(tilt*.42);
+     CTX.translate(wingW,0); CTX.scale(-1,1);
+     CTX.drawImage(wingImage,0,-wingH*.50,wingW,wingH);
+     CTX.restore();
+   }
  }
  if(state.cinderellaAccessory==='tiara'){
    // Crown sits over natural hair, no artificial hair added.
    drawArt('tiara',top.x,top.y-faceH*.19,faceW*1.12,0,tilt);
- }
- if(state.cinderellaDress==='dress_blue'){
-   // Wearable bodice anchored below the chin, scaled to estimated shoulders.
-   // Face mesh alone does not locate shoulders; the overlay is approximate.
-   const shoulderY=chin.y+faceH*.47;
-   drawArt('dress_blue',chin.x,shoulderY,faceW*2.22,0,tilt*.30);
  }
  if(state.cinderellaCompanion!=='none'){
    const name=state.cinderellaCompanion;
@@ -230,7 +243,7 @@ function loop(now){if(!state.running)return; if(VIDEO.readyState>=2){ if(state.l
 function savePhoto(){ if(!state.running||!CANVAS.width)return; paint(); const filename=`face-magic-${new Date().toISOString().replace(/[:.]/g,'-')}.png`; CANVAS.toBlob(blob=>{ if(!blob){alert('לא ניתן לשמור תמונה במכשיר הזה');return;} const url=URL.createObjectURL(blob); const a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove(); setTimeout(()=>URL.revokeObjectURL(url),30000); status('התמונה נשמרה או הועברה להורדות 📸'); },'image/png'); }
 function clearCurrent(){
  if(state.activeTab==='cinderella'){
-   state.cinderellaTattoo='none'; state.cinderellaCompanion='none'; state.cinderellaAccessory='none'; state.cinderellaDress='none'; state.cinderellaPosition='both';
+   state.cinderellaTattoo='none'; state.cinderellaCompanion='none'; state.cinderellaAccessory='none'; state.cinderellaWings='none'; state.cinderellaPosition='both';
  } else {
    state.tattoo='none'; state.accessory='none'; state.smile='none'; state.position='right';
  }
