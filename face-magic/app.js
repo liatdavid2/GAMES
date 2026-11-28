@@ -94,8 +94,26 @@ function loop(now){if(!state.running)return;
  if(video.readyState>=2)draw(now);
  frameHandle=requestAnimationFrame(loop);
 }
-function resizeCanvas(){const ratio=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*ratio);canvas.height=Math.round(innerHeight*ratio);}
-window.addEventListener('resize',resizeCanvas);resizeCanvas();
+// Size Canvas to the camera region (not the full window) now that the controls are above it.
+function resizeCanvas(){
+ const bounds=canvas.getBoundingClientRect();
+ const ratio=Math.min(window.devicePixelRatio||1,2);
+ const width=Math.max(1,Math.round(bounds.width*ratio));
+ const height=Math.max(1,Math.round(bounds.height*ratio));
+ if(canvas.width!==width || canvas.height!==height){canvas.width=width;canvas.height=height;}
+}
+window.addEventListener('resize',resizeCanvas);
+if('ResizeObserver' in window){new ResizeObserver(resizeCanvas).observe($('#cameraZone'));}
+resizeCanvas();
+// Show/hide the selector to give more space to the camera without covering it.
+$('#toggleOptions').addEventListener('click',()=>{
+ const area=$('#optionArea');
+ area.hidden=!area.hidden;
+ const expanded=!area.hidden;
+ $('#toggleOptions').setAttribute('aria-expanded',String(expanded));
+ $('#toggleOptions').textContent=expanded?'⬆️ צמצום':'⬇️ בחירה';
+ resizeCanvas();
+});
 function stop(){state.stream?.getTracks().forEach(t=>t.stop());state.stream=null;}
 async function openCam(){stop();const constraints={video:{facingMode:{ideal:state.facing},width:{ideal:1280},height:{ideal:720}},audio:false};
  let stream;try{stream=await navigator.mediaDevices.getUserMedia(constraints);}catch(e){if(e.name==='OverconstrainedError')stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});else throw e;}

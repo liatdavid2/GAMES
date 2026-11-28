@@ -4,45 +4,51 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#071333"><meta name="description" content="סטודיו צילום חנוכה עם קעקועים, כובעים וכתרים לכל המשפחה">
 <title>קסם חנוכה ✨ מצלמה לכולם</title>
-<link rel="stylesheet" href="style.css?v=hanukkah-4-working-loader">
+<link rel="stylesheet" href="style.css?v=hanukkah-5-top-layout">
 </head>
 <body>
 <main class="app">
-  <video id="video" autoplay muted playsinline aria-hidden="true"></video>
-  <canvas id="stage" aria-label="וידאו עם קעקועי חנוכה, כתרים ושפמים"></canvas>
-  <div class="shade shade-top"></div><div class="shade shade-bottom"></div>
   <header class="topbar">
-    <div class="brand"><span class="brand-emoji">🕎</span><div><strong>קסם חנוכה</strong><small>מצלמה לכל המשפחה • פיות ונסיכות ✨</small></div></div>
-    <div class="right-actions"><span id="facesPill" class="pill">📷 מוכנים?</span><button id="flipButton" class="mini" disabled aria-label="החלפת מצלמה">🔄</button></div>
+    <div class="brand"><span class="brand-emoji">🕎</span><div><strong>קסם חנוכה</strong><small>פילטרים לכל המשפחה ✨</small></div></div>
+    <div class="right-actions"><span id="facesPill" class="pill">📷 מוכנים?</span><button id="flipButton" class="mini" disabled aria-label="החלפת מצלמה" title="החלף מצלמה">🔄</button></div>
   </header>
-  <section id="welcome" class="welcome">
-    <div class="welcome-glow">🕎</div>
-    <h1>חנוכה שמח!</h1>
-    <p>בוחרים קסם, מחייכים ומצטלמים יחד</p>
-    <button id="startButton" class="start">📷 הפעילו מצלמה</button>
-    <small>הצילום נשאר במכשיר שלכם • ללא הרשמה</small>
-  </section>
-  <div id="greeting" class="greeting" aria-hidden="true">✨ חנוכה שמח! ✨</div>
-  <section id="loading" class="loading" hidden role="status" aria-live="polite">טוענים זיהוי פנים... ✨</section>
-  <div id="errorBox" class="error-box" hidden><strong>זיהוי הפנים עדיין לא מוכן</strong><p id="errorDetails"></p><button id="retryButton">🔁 נסו שוב</button><small>אם הקבצים חסרים: בדקו ש־Actions הסתיים בהצלחה וש־Pages מוגדר ל־GitHub Actions.</small></div>
+
   <section id="controlPanel" class="controls" aria-label="עיצוב הפילטרים">
-    <div class="tabs" role="tablist" aria-label="קטגוריות">
-      <button data-tab="tattoos" role="tab" aria-selected="true" class="selected">💙 קעקועים</button>
-      <button data-tab="headwear" role="tab" aria-selected="false">👑 כתרים וכובעים</button>
-      <button data-tab="fun" role="tab" aria-selected="false">🥸 שפם ואפקטים</button>
+    <div class="menu-row">
+      <div class="tabs" role="tablist" aria-label="קטגוריות">
+        <button data-tab="tattoos" role="tab" aria-selected="true" class="selected">💙 קעקועים</button>
+        <button data-tab="headwear" role="tab" aria-selected="false">👑 כתרים וכובעים</button>
+        <button data-tab="fun" role="tab" aria-selected="false">🥸 שפם ואפקטים</button>
+      </div>
+      <button id="toggleOptions" class="menu-toggle" type="button" aria-expanded="true" aria-controls="optionArea" title="הסתר / הצג אפשרויות">⬆️ צמצום</button>
+      <div class="bottom-actions">
+        <button id="saveButton" class="capture" disabled>📸 שמירה</button>
+        <button id="shareButton" class="share" disabled>💌 שיתוף</button>
+      </div>
     </div>
-    <div id="choices" class="choices" aria-label="אפשרויות עיצוב"></div>
-    <div class="second-row">
-      <div class="scale-wrap"><label for="size">גודל</label><input id="size" type="range" min="65" max="150" value="110" step="5" aria-label="גודל האפקטים"></div>
-      <label class="switch"><input id="bothCheeks" type="checkbox" checked><span>שתי לחיים</span></label>
-      <button id="resetButton" class="quiet">🧼 ניקוי</button>
+    <div id="optionArea" class="option-area">
+      <div id="choices" class="choices" aria-label="אפשרויות עיצוב"></div>
+      <div class="second-row">
+        <div class="scale-wrap"><label for="size">גודל</label><input id="size" type="range" min="65" max="150" value="110" step="5" aria-label="גודל האפקטים"></div>
+        <label class="switch"><input id="bothCheeks" type="checkbox" checked><span>שתי לחיים</span></label>
+        <button id="resetButton" class="quiet">🧼 ניקוי</button>
+      </div>
     </div>
-    <div class="bottom-actions">
-      <button id="saveButton" class="capture" disabled>📸 שמירת תמונה</button>
-      <button id="shareButton" class="share" disabled>💌 שיתוף</button>
-    </div>
-    <div class="footer-hint">הבחירות חלות על כל הפנים שזוהו • מתאים ל־GitHub Pages</div>
+  </section>
+
+  <section id="cameraZone" class="camera-zone" aria-label="תצוגת מצלמה">
+    <video id="video" autoplay muted playsinline aria-hidden="true"></video>
+    <canvas id="stage" aria-label="וידאו עם קעקועי חנוכה, כתרים ושפמים"></canvas>
+    <section id="welcome" class="welcome">
+      <div class="welcome-glow">🕎</div>
+      <h1>חנוכה שמח!</h1>
+      <p>בוחרים קסם, מחייכים ומצטלמים יחד</p>
+      <button id="startButton" class="start">📷 הפעילו מצלמה</button>
+      <small>הצילום נשאר במכשיר שלכם • ללא הרשמה</small>
+    </section>
+    <section id="loading" class="loading" hidden role="status" aria-live="polite">טוענים זיהוי פנים... ✨</section>
+    <div id="errorBox" class="error-box" hidden><strong>זיהוי הפנים עדיין לא מוכן</strong><p id="errorDetails"></p><button id="retryButton">🔁 נסו שוב</button></div>
   </section>
 </main>
-<script type="module" src="app.js?v=hanukkah-4-working-loader"></script>
+<script type="module" src="app.js?v=hanukkah-5-top-layout"></script>
 </body></html>
