@@ -35,7 +35,7 @@ $('#size').addEventListener('input',e=>state.size=Number(e.target.value)/100);
 $('#bothCheeks').addEventListener('change',e=>state.both=e.target.checked);
 $('#resetButton').addEventListener('click',()=>{state.tattoo='none';state.headwear='none';state.moustache='none';state.effect='none';tabs();});
 tabs();
-function imageAt(name,x,y,width,height=0,angle=0){const im=asset(name);if(!im)return;const h=height||width*im.naturalHeight/im.naturalWidth;ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.drawImage(im,-width/2,-h/2,width,h);ctx.restore();}
+function imageAt(name,x,y,width,height=0,angle=0,keepInFrame=false){const im=asset(name);if(!im)return;const h=height||width*im.naturalHeight/im.naturalWidth;let px=x,py=y;if(keepInFrame){const pad=6;px=Math.max(width/2+pad,Math.min(video.videoWidth-width/2-pad,px));py=Math.max(h/2+pad,Math.min(video.videoHeight-h/2-pad,py));}ctx.save();ctx.translate(px,py);ctx.rotate(angle);ctx.drawImage(im,-width/2,-h/2,width,h);ctx.restore();}
 function pos(l,i){return {x:l[i].x*video.videoWidth,y:l[i].y*video.videoHeight};}
 function span(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 function sparkle(x,y,r,t){ctx.save();ctx.translate(x,y);ctx.rotate(t);ctx.fillStyle='#fff6bf';ctx.shadowBlur=r*1.1;ctx.shadowColor='#ffd66d';ctx.beginPath();ctx.moveTo(0,-r);ctx.quadraticCurveTo(r*.14,-r*.13,r*.32,0);ctx.quadraticCurveTo(r*.13,r*.13,0,r);ctx.quadraticCurveTo(-r*.13,r*.13,-r*.32,0);ctx.quadraticCurveTo(-r*.13,-r*.13,0,-r);ctx.fill();ctx.restore();}
@@ -44,19 +44,19 @@ function moustache(x,y,w,tilt,kind){
  const palette=kind==='moustache_fire'?['#ff9d29','#ffda58']:kind==='moustache_dreidel'?['#3e83ff','#f2c666']:['#ffe3a2','#bb751e'];
  for(const side of [-1,1]){ctx.save();ctx.scale(side,1);const grad=ctx.createLinearGradient(0,-.2,.55,.25);grad.addColorStop(0,palette[0]);grad.addColorStop(1,palette[1]);ctx.fillStyle=grad;ctx.strokeStyle='#fff8d2';ctx.lineWidth=.018;
  ctx.beginPath();ctx.moveTo(0,-.04);ctx.bezierCurveTo(.12,-.22,.28,-.23,.43,-.13);ctx.bezierCurveTo(.54,-.11,.54,-.26,.61,-.3);ctx.bezierCurveTo(.7,-.15,.62,.10,.41,.17);ctx.bezierCurveTo(.23,.26,.12,.05,0,.07);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();}
- ctx.restore();if(kind==='moustache_dreidel'){imageAt('tattoo_dreidels',x-w*.44,y-w*.1,w*.34,0,tilt);imageAt('tattoo_dreidels',x+w*.44,y-w*.1,w*.34,0,tilt);}if(kind==='moustache_fire'){sparkle(x-w*.56,y-w*.3,w*.07,0);sparkle(x+w*.55,y-w*.3,w*.07,0);}}
+ ctx.restore();if(kind==='moustache_dreidel'){imageAt('tattoo_dreidels',x-w*.44,y-w*.1,w*.34,0,tilt,true);imageAt('tattoo_dreidels',x+w*.44,y-w*.1,w*.34,0,tilt,true);}if(kind==='moustache_fire'){sparkle(x-w*.56,y-w*.3,w*.07,0);sparkle(x+w*.55,y-w*.3,w*.07,0);}}
 function faceEffects(landmarks,i,now){
  const left=pos(landmarks,234),right=pos(landmarks,454),forehead=pos(landmarks,10),chin=pos(landmarks,152),leftEye=pos(landmarks,33),rightEye=pos(landmarks,263),nose=pos(landmarks,2);
  const width=span(left,right),height=span(forehead,chin),rot=Math.atan2(rightEye.y-leftEye.y,rightEye.x-leftEye.x),s=state.size;
  const cheeks=[pos(landmarks,205),pos(landmarks,425)];
  if(state.tattoo!=='none'){
    const targets=state.both?cheeks:[cheeks[0]];
-   for(let j=0;j<targets.length;j++){let p=targets[j];imageAt(state.tattoo,p.x,p.y,width*.57*s,0,rot+(j===1?-.06:.06));}
+   for(let j=0;j<targets.length;j++){let p=targets[j];imageAt(state.tattoo,p.x,p.y,width*.57*s,0,rot+(j===1?-.06:.06),true);}
  }
  if(state.headwear!=='none'){
    // Larger headgear follows the face; sticker sits above the forehead.
    let cy=forehead.y-height*(state.headwear==='kippah'?.33:.27);
-   imageAt(state.headwear,forehead.x,cy,width*(state.headwear==='hat_magic'?1.42:state.headwear==='kippah'?1.06:1.36)*s,0,rot);
+   imageAt(state.headwear,forehead.x,cy,width*(state.headwear==='hat_magic'?1.42:state.headwear==='kippah'?1.06:1.36)*s,0,rot,true);
  }
  if(state.moustache!=='none') moustache(nose.x,nose.y+height*.105,width*.59*s,rot,state.moustache);
  if(state.effect!=='none'){
@@ -64,8 +64,8 @@ function faceEffects(landmarks,i,now){
   for(let j=0;j<8;j++){
    const phase=t*.75+j*1.73+i*.7,xx=forehead.x+Math.cos(phase+j)*width*(.68+(j%3)*.12),yy=forehead.y+Math.sin(phase*1.4+j)*height*.60;
    if(state.effect==='effect_stars')sparkle(xx,yy,Math.max(3,width*.035)*(1+.25*Math.sin(phase)),phase);
-   if(state.effect==='effect_dreidel')imageAt('tattoo_dreidels',xx,yy,width*.27,0,phase);
-   if(state.effect==='effect_coins')imageAt('tattoo_coins',xx,yy,width*.20,0,phase);
+   if(state.effect==='effect_dreidel')imageAt('tattoo_dreidels',xx,yy,width*.27,0,phase,true);
+   if(state.effect==='effect_coins')imageAt('tattoo_coins',xx,yy,width*.20,0,phase,true);
    if(state.effect==='effect_fireworks'){for(let k=0;k<7;k++){const a=k*Math.PI*2/7+phase;ctx.strokeStyle=k%2?'#ffe08b':'#8dcaff';ctx.lineWidth=Math.max(1,width*.013);ctx.beginPath();ctx.moveTo(xx+Math.cos(a)*width*.05,yy+Math.sin(a)*width*.05);ctx.lineTo(xx+Math.cos(a)*width*.22,yy+Math.sin(a)*width*.22);ctx.stroke();}}
   }
  }
@@ -83,7 +83,7 @@ function draw(now=0){
  ctx.restore();
  // Greeting in picture and live preview. Draw after mirrored camera, so Hebrew remains readable.
  const fontSize=Math.max(23,Math.min(cw*.067,49));ctx.font=`900 ${fontSize}px system-ui, Arial`;ctx.textAlign='center';ctx.textBaseline='middle';
- ctx.shadowBlur=14;ctx.shadowColor='#ffb54c';ctx.lineWidth=Math.max(4,fontSize*.15);ctx.strokeStyle='#42245b';ctx.strokeText('✨ חנוכה שמח! ✨',cw/2,Math.max(fontSize,Math.min(ch*.17,145)));ctx.fillStyle='#ffe5a0';ctx.fillText('✨ חנוכה שמח! ✨',cw/2,Math.max(fontSize,Math.min(ch*.17,145)));ctx.shadowBlur=0;
+ const greetingY=ch-fontSize*0.9-12;ctx.shadowBlur=14;ctx.shadowColor='#ffb54c';ctx.lineWidth=Math.max(4,fontSize*.15);ctx.strokeStyle='#42245b';ctx.strokeText('✨ חנוכה שמח! ✨',cw/2,greetingY);ctx.fillStyle='#ffe5a0';ctx.fillText('✨ חנוכה שמח! ✨',cw/2,greetingY);ctx.shadowBlur=0;
 }
 let frameHandle=0;
 function loop(now){if(!state.running)return;
