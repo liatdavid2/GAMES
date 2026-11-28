@@ -1,48 +1,68 @@
 <!doctype html>
 <html lang="he" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<meta name="theme-color" content="#071333"><meta name="description" content="סטודיו צילום חנוכה עם קעקועים, כובעים וכתרים לכל המשפחה">
-<title>קסם חנוכה ✨ מצלמה לכולם</title>
-<link rel="stylesheet" href="style.css?v=hanukkah-3-local">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#8f49d8">
+  <meta name="description" content="קסם על הפנים: משחק פילטרים וקעקועים עם מצלמה, לגילאי 6 ומעלה">
+  <title>קסם על הפנים ✨</title>
+  <link rel="stylesheet" href="style.css?v=7-wings">
 </head>
 <body>
-<main class="app">
-  <video id="video" autoplay muted playsinline aria-hidden="true"></video>
-  <canvas id="stage" aria-label="וידאו עם קעקועי חנוכה, כתרים ושפמים"></canvas>
-  <div class="shade shade-top"></div><div class="shade shade-bottom"></div>
-  <header class="topbar">
-    <div class="brand"><span class="brand-emoji">🕎</span><div><strong>קסם חנוכה</strong><small>מצלמה לכל המשפחה • פיות ונסיכות ✨</small></div></div>
-    <div class="right-actions"><span id="facesPill" class="pill">📷 מוכנים?</span><button id="flipButton" class="mini" disabled aria-label="החלפת מצלמה">🔄</button></div>
-  </header>
-  <section id="welcome" class="welcome">
-    <div class="welcome-glow">🕎</div>
-    <h1>חנוכה שמח!</h1>
-    <p>בוחרים קסם, מחייכים ומצטלמים יחד</p>
-    <button id="startButton" class="start">📷 הפעילו מצלמה</button>
-    <small>הצילום נשאר במכשיר שלכם • ללא הרשמה</small>
-  </section>
-  <div id="greeting" class="greeting" aria-hidden="true">✨ חנוכה שמח! ✨</div>
-  <section id="loading" class="loading" hidden role="status" aria-live="polite">טוענים זיהוי פנים... ✨</section>
-  <div id="errorBox" class="error-box" hidden><strong>זיהוי הפנים עדיין לא מוכן</strong><p id="errorDetails"></p><button id="retryButton">🔁 נסו שוב</button><small>אם הקבצים חסרים: בדקו ש־Actions הסתיים בהצלחה וש־Pages מוגדר ל־GitHub Actions.</small></div>
-  <section id="controlPanel" class="controls" aria-label="עיצוב הפילטרים">
-    <div class="tabs" role="tablist" aria-label="קטגוריות">
-      <button data-tab="tattoos" role="tab" aria-selected="true" class="selected">💙 קעקועים</button>
-      <button data-tab="headwear" role="tab" aria-selected="false">👑 כתרים וכובעים</button>
-      <button data-tab="fun" role="tab" aria-selected="false">🥸 שפם ואפקטים</button>
+  <main class="app">
+    <header>
+      <div class="eyebrow">✨ סטודיו הקסמים שלי ✨</div>
+      <h1>קסם על הפנים <span>🦋</span></h1>
+      <p class="version">גרסה 7 · סינדרלה עם כנפיים וקעקועים גדולים</p>
+      <p>בחרי קסם, חייכי וצלמי!</p>
+    </header>
+
+    <section class="camera-card" aria-label="מצלמה ואפקטים">
+      <div class="camera-frame" id="cameraFrame">
+        <video id="video" autoplay muted playsinline aria-hidden="true"></video>
+        <canvas id="view" aria-label="תמונה מהמצלמה עם אפקטים"></canvas>
+        <div class="empty" id="empty"><div class="empty-emoji">🪄💖</div><strong>מוכנה לקסם?</strong><p>לחצי על הכפתור כדי להפעיל את המצלמה</p><button id="startButton" class="primary large">📷 הפעילי מצלמה</button></div>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+        <span class="privacy">🔒 התמונות נשארות אצלך</span>
+      </div>
+      <div id="modelPanel" class="model-panel" hidden>
+        <strong>⚠️ זיהוי הפנים לא נטען</strong>
+        <p>המצלמה עובדת, אבל צריך לטעון ספריית זיהוי פנים וקובץ מודל מהאינטרנט. בדקי חיבור ורענני, או נסי שוב.</p>
+        <p id="modelDetails" class="model-details" dir="ltr"></p>
+        <button id="retryButton" type="button" class="secondary">🔁 נסי שוב לטעון זיהוי פנים</button>
+      </div>
+      <div class="camera-buttons">
+        <button id="saveButton" class="primary" disabled>📸 שמור תמונה</button>
+        <button id="switchButton" class="secondary" disabled>🔄 החלף מצלמה</button>
+        <button id="clearButton" class="secondary">🧼 נקי קסמים</button>
+      </div>
+    </section>
+
+    <section class="tabs panel compact" aria-label="בחירת עולם קסם">
+      <div class="tab-buttons" role="tablist" aria-label="עולמות משחק">
+        <button class="tab-button active" type="button" data-tab="magic" role="tab" aria-selected="true">🦋 קסמים</button>
+        <button class="tab-button" type="button" data-tab="cinderella" role="tab" aria-selected="false">👠 סינדרלה</button>
+      </div>
+      <p class="hint tiny center">בחרי טאב ואז עצבי את הפנים בסגנון שאת אוהבת</p>
+    </section>
+
+    <div class="tab-page active" data-page="magic">
+      <section class="panel" aria-label="בחירת קעקוע"><h2>1. בחרי קעקוע 💕</h2><div class="choices" id="tattooChoices"></div></section>
+      <section class="panel" aria-label="בחירת מיקום"><h2>2. איפה הקעקוע? 🎯</h2><div class="choices" id="positionChoices"></div></section>
+      <section class="panel" aria-label="אביזרי פנים"><h2>3. הוסיפי אביזר 👑</h2><div class="choices" id="accessoryChoices"></div></section>
+      <section class="panel" aria-label="תכנות קסם"><h2>4. תכנתִי קסם משלך 🧩</h2><p class="hint">כשאני מחייכת 😄 → יופיעו...</p><div class="choices" id="smileChoices"></div><p class="hint tiny">האפקט מופיע כשיוצרים חיוך מול המצלמה</p></section>
     </div>
-    <div id="choices" class="choices" aria-label="אפשרויות עיצוב"></div>
-    <div class="second-row">
-      <div class="scale-wrap"><label for="size">גודל</label><input id="size" type="range" min="65" max="150" value="110" step="5" aria-label="גודל האפקטים"></div>
-      <label class="switch"><input id="bothCheeks" type="checkbox" checked><span>שתי לחיים</span></label>
-      <button id="resetButton" class="quiet">🧼 ניקוי</button>
+
+    <div class="tab-page" data-page="cinderella">
+      <section class="panel" aria-label="קעקועי סינדרלה"><h2>1. קעקועים מאוירים של סינדרלה 👠</h2><div class="choices" id="cinderellaTattooChoices"></div></section>
+      <section class="panel" aria-label="חברים מהאגדה"><h2>2. מי מצטרף לתמונה? ✨</h2><div class="choices" id="cinderellaCompanionChoices"></div></section>
+      <section class="panel" aria-label="אביזר מלכותי"><h2>3. כתר מלכותי 👑</h2><div class="choices" id="cinderellaAccessoryChoices"></div></section>
+      <section class="panel" aria-label="כנפיים"><h2>4. כנפיים קסומות 🪽</h2><div class="choices" id="cinderellaWingsChoices"></div><p class="hint tiny">הכנפיים מופיעות לצד הפנים, בלי לכסות אותן.</p></section>
+      <section class="panel" aria-label="מיקום קעקוע"><h2>5. איפה הקעקוע? 🎯</h2><div class="choices" id="cinderellaPositionChoices"></div></section>
     </div>
-    <div class="bottom-actions">
-      <button id="saveButton" class="capture" disabled>📸 שמירת תמונה</button>
-      <button id="shareButton" class="share" disabled>💌 שיתוף</button>
-    </div>
-    <div class="footer-hint">הבחירות חלות על כל הפנים שזוהו • מתאים ל־GitHub Pages</div>
-  </section>
-</main>
-<script type="module" src="app.js?v=hanukkah-3-local"></script>
-</body></html>
+
+    <footer>ללא הרשמה • ללא העלאת תמונות • המצלמה פועלת רק אחרי אישורך<br><span>בעזרת הורה, אפשר לשמור את התמונה ולשלוח לחברות 💌</span></footer>
+  </main>
+  <script type="module" src="app.js?v=7-wings"></script>
+</body>
+</html>
