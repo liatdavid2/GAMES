@@ -16,7 +16,7 @@ const DATA = {
  headwear:[['none','בלי כובע',null,'🚫'],['crown_princess_star','כתר נסיכת חנוכה'],['headband_fairy_hanukkah','קשת פיית חנוכה'],['hat_rainbow_magic','כובע קשת קסום'],['headband_princess_rainbow','קשת נסיכות וסביבונים'],['crown_menorah','כתר חנוכייה'],['crown_star','כתר מגן דוד'],['crown_candles','כתר נרות'],['hat_magic','כובע קסמים'],['kippah','כיפה חגיגית'],['headband_dreidel','קשת סביבונים']],
  fun:[['none','בלי שפם',null,'🚫'],['moustache_dreidel','שפם סביבונים',null,'🥸'],['moustache_gold','שפם זהב',null,'〰️'],['moustache_fire','שפם להבות',null,'🔥'],['effect_stars','כוכבים עפים',null,'✨'],['effect_dreidel','סביבונים מסתובבים',null,'🌀'],['effect_coins','גשם מטבעות',null,'🪙'],['effect_fireworks','זיקוקי חנוכה',null,'🎆']]
 };
-const state={tab:'tattoos',tattoo:'tattoo_menorah_rainbow',headwear:'crown_princess_star',moustache:'none',effect:'effect_stars',size:1.10,both:true,facing:'user',running:false,stream:null,model:null,faces:null,lastVideoTime:-1,lastDetect:0,painting:false,pending:false};
+const state={tab:'tattoos',tattoo:'tattoo_menorah_rainbow',headwear:'crown_princess_star',moustache:'none',effect:'effect_stars',tattooSize:1.05,headwearSize:1.05,tattooPosition:'both',facing:'user',running:false,stream:null,model:null,faces:null,lastVideoTime:-1,lastDetect:0,painting:false,pending:false};
 const allAssetNames=[...new Set([...DATA.tattoos,...DATA.headwear].map(x=>x[0]).filter(x=>x!=='none'))];
 const imgs={};
 for(const name of allAssetNames){const im=new Image();im.src=`assets/${name}.png`;imgs[name]=im;}
@@ -31,8 +31,9 @@ function tabs(){document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.
  refreshSelected();}
 function refreshSelected(){document.querySelectorAll('.choice').forEach(b=>{const id=b.dataset.id;const sel=state.tab==='tattoos'?state.tattoo===id:state.tab==='headwear'?state.headwear===id:id.startsWith('effect')?state.effect===id:state.moustache===id;b.classList.toggle('selected',sel);b.setAttribute('aria-pressed',String(sel));});}
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{state.tab=b.dataset.tab;tabs();}));
-$('#size').addEventListener('input',e=>state.size=Number(e.target.value)/100);
-$('#bothCheeks').addEventListener('change',e=>state.both=e.target.checked);
+$('#tattooSize').addEventListener('input',e=>state.tattooSize=Number(e.target.value)/100);
+$('#headwearSize').addEventListener('input',e=>state.headwearSize=Number(e.target.value)/100);
+document.querySelectorAll('input[name="tattooPosition"]').forEach(radio=>radio.addEventListener('change',e=>{if(e.target.checked)state.tattooPosition=e.target.value;}));
 $('#resetButton').addEventListener('click',()=>{state.tattoo='none';state.headwear='none';state.moustache='none';state.effect='none';tabs();});
 tabs();
 function imageAt(name,x,y,width,height=0,angle=0,keepInFrame=false){const im=asset(name);if(!im)return;const h=height||width*im.naturalHeight/im.naturalWidth;let px=x,py=y;if(keepInFrame){const pad=6;px=Math.max(width/2+pad,Math.min(video.videoWidth-width/2-pad,px));py=Math.max(h/2+pad,Math.min(video.videoHeight-h/2-pad,py));}ctx.save();ctx.translate(px,py);ctx.rotate(angle);ctx.drawImage(im,-width/2,-h/2,width,h);ctx.restore();}
@@ -47,16 +48,16 @@ function moustache(x,y,w,tilt,kind){
  ctx.restore();if(kind==='moustache_dreidel'){imageAt('tattoo_dreidels',x-w*.44,y-w*.1,w*.34,0,tilt,true);imageAt('tattoo_dreidels',x+w*.44,y-w*.1,w*.34,0,tilt,true);}if(kind==='moustache_fire'){sparkle(x-w*.56,y-w*.3,w*.07,0);sparkle(x+w*.55,y-w*.3,w*.07,0);}}
 function faceEffects(landmarks,i,now){
  const left=pos(landmarks,234),right=pos(landmarks,454),forehead=pos(landmarks,10),chin=pos(landmarks,152),leftEye=pos(landmarks,33),rightEye=pos(landmarks,263),nose=pos(landmarks,2);
- const width=span(left,right),height=span(forehead,chin),rot=Math.atan2(rightEye.y-leftEye.y,rightEye.x-leftEye.x),s=state.size;
+ const width=span(left,right),height=span(forehead,chin),rot=Math.atan2(rightEye.y-leftEye.y,rightEye.x-leftEye.x);
  const cheeks=[pos(landmarks,205),pos(landmarks,425)];
  if(state.tattoo!=='none'){
-   const targets=state.both?cheeks:[cheeks[0]];
-   for(let j=0;j<targets.length;j++){let p=targets[j];imageAt(state.tattoo,p.x,p.y,width*.57*s,0,rot+(j===1?-.06:.06),true);}
+   const targets=state.tattooPosition==='forehead'?[pos(landmarks,151)]:state.tattooPosition==='right'?[cheeks[0]]:cheeks;
+   for(let j=0;j<targets.length;j++){let p=targets[j];const w=width*(state.tattooPosition==='forehead'?.42:.57)*state.tattooSize;imageAt(state.tattoo,p.x,p.y,w,0,rot+(j===1?-.06:.06),true);}
  }
  if(state.headwear!=='none'){
    // Larger headgear follows the face; sticker sits above the forehead.
    let cy=forehead.y-height*(state.headwear==='kippah'?.33:.27);
-   imageAt(state.headwear,forehead.x,cy,width*(state.headwear==='hat_magic'?1.42:state.headwear==='kippah'?1.06:1.36)*s,0,rot,true);
+   imageAt(state.headwear,forehead.x,cy,width*(state.headwear==='hat_magic'?1.42:state.headwear==='kippah'?1.06:1.36)*state.headwearSize,0,rot,true);
  }
  if(state.moustache!=='none') moustache(nose.x,nose.y+height*.105,width*.59*s,rot,state.moustache);
  if(state.effect!=='none'){

@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#071333"><meta name="description" content="סטודיו צילום חנוכה עם קעקועים, כובעים וכתרים לכל המשפחה">
 <title>קסם חנוכה ✨ מצלמה לכולם</title>
-<link rel="stylesheet" href="style.css?v=hanukkah-6-fix-assets">
+<link rel="stylesheet" href="style.css?v=hanukkah-7-positions-sizes">
 </head>
 <body>
 <main class="app">
@@ -29,8 +29,14 @@
     <div id="optionArea" class="option-area">
       <div id="choices" class="choices" aria-label="אפשרויות עיצוב"></div>
       <div class="second-row">
-        <div class="scale-wrap"><label for="size">גודל</label><input id="size" type="range" min="65" max="150" value="110" step="5" aria-label="גודל האפקטים"></div>
-        <label class="switch"><input id="bothCheeks" type="checkbox" checked><span>שתי לחיים</span></label>
+        <div class="scale-wrap"><label for="tattooSize">קעקועים</label><input id="tattooSize" type="range" min="60" max="180" value="105" step="5" aria-label="גודל הקעקועים"></div>
+        <div class="scale-wrap"><label for="headwearSize">כתרים וכובעים</label><input id="headwearSize" type="range" min="60" max="180" value="105" step="5" aria-label="גודל כתרים וכובעים"></div>
+        <fieldset class="position-set" aria-label="מיקום קעקועים">
+          <legend>מיקום קעקוע</legend>
+          <label><input type="radio" name="tattooPosition" value="both" checked> שתי לחיים</label>
+          <label><input type="radio" name="tattooPosition" value="right"> לחי אחת</label>
+          <label><input type="radio" name="tattooPosition" value="forehead"> מצח</label>
+        </fieldset>
         <button id="resetButton" class="quiet">🧼 ניקוי</button>
       </div>
     </div>
@@ -50,5 +56,5 @@
     <div id="errorBox" class="error-box" hidden><strong>זיהוי הפנים עדיין לא מוכן</strong><p id="errorDetails"></p><button id="retryButton">🔁 נסו שוב</button></div>
   </section>
 </main>
-<script type="module" src="app.js?v=hanukkah-6-fix-assets"></script>
+<script type="module" src="app.js?v=hanukkah-7-positions-sizes"></script>
 </body></html>
