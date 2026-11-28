@@ -1,130 +1,257 @@
-// Hanukkah Face Magic • No photo uploads, accounts or analytics.
+// Face Magic: runs entirely in the user's browser. No image upload or analytics.
+const MP_VERSION = '0.10.22';
+const VIDEO = document.querySelector('#video');
+const CANVAS = document.querySelector('#view');
+const CTX = CANVAS.getContext('2d', {alpha:false});
 const $ = s => document.querySelector(s);
-const video=$('#video'),canvas=$('#stage'),ctx=canvas.getContext('2d',{alpha:false});
-const DATA = {
- tattoos:[
-  ['none','ללא קעקוע',null,'🚫'],
-  ['tattoo_menorah','חנוכייה פרחונית'],['tattoo_star_floral','מגן דוד עם פרחים'],
-  ['tattoo_dreidel_bow','סביבון וסרט'],['tattoo_donut','סופגנייה מתוקה'],
-  ['tattoo_stars','כוכבים מנצנצים'],['tattoo_candle_dove','נר ויונה'],
-  ['tattoo_star_trail','שובל אור'],['tattoo_dreidels','סביבונים כחולים'],
-  ['tattoo_shield','מגן חנוכה'],['tattoo_lion','אריה זהוב'],
-  ['tattoo_menorah_gold','חנוכייה זהובה'],['tattoo_torch','לפיד האור'],['tattoo_coins','דמי חנוכה']
- ],
- headwear:[['none','בלי כובע',null,'🚫'],['crown_menorah','כתר חנוכייה'],['crown_star','כתר מגן דוד'],['crown_candles','כתר נרות'],['hat_magic','כובע קסמים'],['kippah','כיפה חגיגית'],['headband_dreidel','קשת סביבונים']],
- fun:[['none','בלי שפם',null,'🚫'],['moustache_dreidel','שפם סביבונים',null,'🥸'],['moustache_gold','שפם זהב',null,'〰️'],['moustache_fire','שפם להבות',null,'🔥'],['effect_stars','כוכבים עפים',null,'✨'],['effect_dreidel','סביבונים מסתובבים',null,'🌀'],['effect_coins','גשם מטבעות',null,'🪙'],['effect_fireworks','זיקוקי חנוכה',null,'🎆']]
+const $$ = s => [...document.querySelectorAll(s)];
+const state = {
+  activeTab:'magic',
+  tattoo:'🦋', position:'right', accessory:'none', smile:'💖',
+  cinderellaTattoo:'glitter_swirl', cinderellaCompanion:'none', cinderellaAccessory:'tiara', cinderellaWings:'wings_blue', cinderellaPosition:'both',
+  facing:'user', stream:null, landmarker:null, running:false, result:null, timestamp:-1, frame:0, lastDetection:0
 };
-const state={tab:'tattoos',tattoo:'tattoo_star_floral',headwear:'crown_menorah',moustache:'none',effect:'effect_stars',size:1.10,both:true,facing:'user',running:false,stream:null,model:null,faces:null,lastVideoTime:-1,lastDetect:0,painting:false,pending:false};
-const allAssetNames=[...new Set([...DATA.tattoos,...DATA.headwear].map(x=>x[0]).filter(x=>x!=='none'))];
-const imgs={};
-for(const name of allAssetNames){const im=new Image();im.src=`assets/${name}.png`;imgs[name]=im;}
-const asset=(name)=>imgs[name]?.complete&&imgs[name]?.naturalWidth?imgs[name]:null;
-function tabs(){document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('selected',b.dataset.tab===state.tab);b.setAttribute('aria-selected',String(b.dataset.tab===state.tab));});
- const holder=$('#choices');holder.replaceChildren();
- const entries=DATA[state.tab];
- for(const [id,label,_,fallback] of entries){const btn=document.createElement('button');btn.className='choice';btn.type='button';btn.dataset.id=id;btn.setAttribute('aria-label',label);
- const im=imgs[id];if(im){const thumb=document.createElement('img');thumb.src=im.src;thumb.alt='';btn.append(thumb);}else{const icon=document.createElement('span');icon.className='icon';icon.textContent=fallback||'✨';btn.append(icon);}
- const caption=document.createElement('span');caption.textContent=label;btn.append(caption);holder.append(btn);
- btn.addEventListener('click',()=>{if(state.tab==='tattoos')state.tattoo=id;else if(state.tab==='headwear')state.headwear=id;else if(id.startsWith('moustache')||id==='none')state.moustache=id;else state.effect=state.effect===id?'none':id;refreshSelected();});}
- refreshSelected();}
-function refreshSelected(){document.querySelectorAll('.choice').forEach(b=>{const id=b.dataset.id;const sel=state.tab==='tattoos'?state.tattoo===id:state.tab==='headwear'?state.headwear===id:id.startsWith('effect')?state.effect===id:state.moustache===id;b.classList.toggle('selected',sel);b.setAttribute('aria-pressed',String(sel));});}
-document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{state.tab=b.dataset.tab;tabs();}));
-$('#size').addEventListener('input',e=>state.size=Number(e.target.value)/100);
-$('#bothCheeks').addEventListener('change',e=>state.both=e.target.checked);
-$('#resetButton').addEventListener('click',()=>{state.tattoo='none';state.headwear='none';state.moustache='none';state.effect='none';tabs();});
-tabs();
-function imageAt(name,x,y,width,height=0,angle=0){const im=asset(name);if(!im)return;const h=height||width*im.naturalHeight/im.naturalWidth;ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.drawImage(im,-width/2,-h/2,width,h);ctx.restore();}
-function pos(l,i){return {x:l[i].x*video.videoWidth,y:l[i].y*video.videoHeight};}
-function span(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
-function sparkle(x,y,r,t){ctx.save();ctx.translate(x,y);ctx.rotate(t);ctx.fillStyle='#fff6bf';ctx.shadowBlur=r*1.1;ctx.shadowColor='#ffd66d';ctx.beginPath();ctx.moveTo(0,-r);ctx.quadraticCurveTo(r*.14,-r*.13,r*.32,0);ctx.quadraticCurveTo(r*.13,r*.13,0,r);ctx.quadraticCurveTo(-r*.13,r*.13,-r*.32,0);ctx.quadraticCurveTo(-r*.13,-r*.13,0,-r);ctx.fill();ctx.restore();}
-function moustache(x,y,w,tilt,kind){
- ctx.save();ctx.translate(x,y);ctx.rotate(tilt);ctx.scale(w, w);
- const palette=kind==='moustache_fire'?['#ff9d29','#ffda58']:kind==='moustache_dreidel'?['#3e83ff','#f2c666']:['#ffe3a2','#bb751e'];
- for(const side of [-1,1]){ctx.save();ctx.scale(side,1);const grad=ctx.createLinearGradient(0,-.2,.55,.25);grad.addColorStop(0,palette[0]);grad.addColorStop(1,palette[1]);ctx.fillStyle=grad;ctx.strokeStyle='#fff8d2';ctx.lineWidth=.018;
- ctx.beginPath();ctx.moveTo(0,-.04);ctx.bezierCurveTo(.12,-.22,.28,-.23,.43,-.13);ctx.bezierCurveTo(.54,-.11,.54,-.26,.61,-.3);ctx.bezierCurveTo(.7,-.15,.62,.10,.41,.17);ctx.bezierCurveTo(.23,.26,.12,.05,0,.07);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();}
- ctx.restore();if(kind==='moustache_dreidel'){imageAt('tattoo_dreidels',x-w*.44,y-w*.1,w*.34,0,tilt);imageAt('tattoo_dreidels',x+w*.44,y-w*.1,w*.34,0,tilt);}if(kind==='moustache_fire'){sparkle(x-w*.56,y-w*.3,w*.07,0);sparkle(x+w*.55,y-w*.3,w*.07,0);}}
-function faceEffects(landmarks,i,now){
- const left=pos(landmarks,234),right=pos(landmarks,454),forehead=pos(landmarks,10),chin=pos(landmarks,152),leftEye=pos(landmarks,33),rightEye=pos(landmarks,263),nose=pos(landmarks,2);
- const width=span(left,right),height=span(forehead,chin),rot=Math.atan2(rightEye.y-leftEye.y,rightEye.x-leftEye.x),s=state.size;
- const cheeks=[pos(landmarks,205),pos(landmarks,425)];
- if(state.tattoo!=='none'){
-   const targets=state.both?cheeks:[cheeks[0]];
-   for(let j=0;j<targets.length;j++){let p=targets[j];imageAt(state.tattoo,p.x,p.y,width*.57*s,0,rot+(j===1?-.06:.06));}
- }
- if(state.headwear!=='none'){
-   // Larger headgear follows the face; sticker sits above the forehead.
-   let cy=forehead.y-height*(state.headwear==='kippah'?.33:.27);
-   imageAt(state.headwear,forehead.x,cy,width*(state.headwear==='hat_magic'?1.42:state.headwear==='kippah'?1.06:1.36)*s,0,rot);
- }
- if(state.moustache!=='none') moustache(nose.x,nose.y+height*.105,width*.59*s,rot,state.moustache);
- if(state.effect!=='none'){
-  const t=now*.001;
-  for(let j=0;j<8;j++){
-   const phase=t*.75+j*1.73+i*.7,xx=forehead.x+Math.cos(phase+j)*width*(.68+(j%3)*.12),yy=forehead.y+Math.sin(phase*1.4+j)*height*.60;
-   if(state.effect==='effect_stars')sparkle(xx,yy,Math.max(3,width*.035)*(1+.25*Math.sin(phase)),phase);
-   if(state.effect==='effect_dreidel')imageAt('tattoo_dreidels',xx,yy,width*.27,0,phase);
-   if(state.effect==='effect_coins')imageAt('tattoo_coins',xx,yy,width*.20,0,phase);
-   if(state.effect==='effect_fireworks'){for(let k=0;k<7;k++){const a=k*Math.PI*2/7+phase;ctx.strokeStyle=k%2?'#ffe08b':'#8dcaff';ctx.lineWidth=Math.max(1,width*.013);ctx.beginPath();ctx.moveTo(xx+Math.cos(a)*width*.05,yy+Math.sin(a)*width*.05);ctx.lineTo(xx+Math.cos(a)*width*.22,yy+Math.sin(a)*width*.22);ctx.stroke();}}
-  }
+const sets = {
+ tattoo:[['🦋','פרפר'],['💖','לב'],['⭐','כוכב'],['🌈','קשת'],['🌸','פרח'],['🐱','חתול'],['⚡','ברק'],['none','בלי','🚫']],
+ position:[['right','לחי ימין','👉'],['left','לחי שמאל','👈'],['both','שתי לחיים','💕'],['forehead','מצח','🎯']],
+ accessory:[['none','בלי','🚫'],['👑','כתר'],['😎','משקפיים'],['🐱','אוזניים'],['🎀','סרט'],['🥸','שפם']],
+ smile:[['💖','לבבות'],['⭐','כוכבים'],['🌸','פרחים'],['🌈','קשתות'],['none','בלי','🚫']],
+ cinderellaTattoo:[['glitter_swirl','נצנצים כחולים','✨'],['castle_tattoo','טירה קסומה','🏰'],['slipper_tattoo','נעל ונצנצים','👠'],['slipper','נעל זכוכית','💎'],['star','כוכבי קסם','⭐'],['none','בלי','🚫']],
+ cinderellaCompanion:[['fairy','פיה טובה','🧚'],['prince','נסיך','🤴'],['coach','כרכרה','🎠'],['none','בלי','🚫']],
+ cinderellaAccessory:[['tiara','כתר משובץ','👑'],['none','בלי כתר','🚫']],
+ cinderellaWings:[['wings_blue','כנפי קריסטל','🪽'],['wings_lilac','כנפי פיה','🦋'],['wings_gold','כנפי זהב','✨'],['none','בלי כנפיים','🚫']],
+ cinderellaPosition:[['both','שתי לחיים','💕'],['right','לחי אחת','👉'],['left','לחי שנייה','👈'],['forehead','מצח','🎯']]
+};
+
+function buildChoices(key){
+ const node = $(`#${key}Choices`);
+ if(!node) return;
+ for(const item of sets[key]){
+   const [value,name,icon=value] = item;
+   const button = document.createElement('button'); button.type='button'; button.className='choice';
+   button.setAttribute('aria-label',name);
+   const artKeys=['cinderellaTattoo','cinderellaCompanion','cinderellaAccessory','cinderellaWings'];
+   const artName=artKeys.includes(key) && value!=='none' ? value : null;
+   const ext = ['star','clock','bow','wings_blue','wings_lilac','wings_gold'].includes(artName)?'svg':'png';
+   button.innerHTML=`<span class="emoji" aria-hidden="true">${artName?`<img src="assets/${artName}.${ext}" alt="">`:icon === 'none'?'🚫':icon}</span><span class="name">${name}</span>`;
+   button.addEventListener('click',()=>{state[key]=value; updateChoices();});
+   button.dataset.value=value;node.appendChild(button);
  }
 }
-function draw(now=0){
- if(!state.running||video.readyState<2||!video.videoWidth)return;
- const cw=canvas.width,ch=canvas.height,vw=video.videoWidth,vh=video.videoHeight;
- ctx.fillStyle='#060b1d';ctx.fillRect(0,0,cw,ch);
- // Cover entire screen while matching MediaPipe coordinate system to cropped video.
- const scale=Math.max(cw/vw,ch/vh),dx=(cw-vw*scale)/2,dy=(ch-vh*scale)/2;
- ctx.save();ctx.translate(dx,dy);ctx.scale(scale,scale);
- if(state.facing==='user'){ctx.translate(vw,0);ctx.scale(-1,1);}
- ctx.drawImage(video,0,0,vw,vh);
- if(state.faces?.faceLandmarks?.length){state.faces.faceLandmarks.forEach((lm,i)=>faceEffects(lm,i,now));}
- ctx.restore();
- // Greeting in picture and live preview. Draw after mirrored camera, so Hebrew remains readable.
- const fontSize=Math.max(23,Math.min(cw*.067,49));ctx.font=`900 ${fontSize}px system-ui, Arial`;ctx.textAlign='center';ctx.textBaseline='middle';
- ctx.shadowBlur=14;ctx.shadowColor='#ffb54c';ctx.lineWidth=Math.max(4,fontSize*.15);ctx.strokeStyle='#42245b';ctx.strokeText('✨ חנוכה שמח! ✨',cw/2,Math.max(fontSize,Math.min(ch*.17,145)));ctx.fillStyle='#ffe5a0';ctx.fillText('✨ חנוכה שמח! ✨',cw/2,Math.max(fontSize,Math.min(ch*.17,145)));ctx.shadowBlur=0;
-}
-let frameHandle=0;
-function loop(now){if(!state.running)return;
- if(video.readyState>=2&&state.model&&video.currentTime!==state.lastVideoTime&&now-state.lastDetect>90){state.lastVideoTime=video.currentTime;state.lastDetect=now;
-  try{state.faces=state.model.detectForVideo(video,now);}catch(e){console.warn('Face detection frame error',e);}
-  const count=state.faces?.faceLandmarks?.length||0;$('#facesPill').textContent=count?`😊 ${count} פנים`:'🔎 מחפשים פנים';
+function updateChoices(){
+ for(const key of Object.keys(sets)){
+   const container = $(`#${key}Choices`);
+   if(!container) continue;
+   for(const b of container.children){
+     const active=b.dataset.value===state[key];
+     b.classList.toggle('active',active);
+     b.setAttribute('aria-pressed',String(active));
+   }
  }
- if(video.readyState>=2)draw(now);
- frameHandle=requestAnimationFrame(loop);
 }
-function resizeCanvas(){const ratio=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*ratio);canvas.height=Math.round(innerHeight*ratio);}
-window.addEventListener('resize',resizeCanvas);resizeCanvas();
-function stop(){state.stream?.getTracks().forEach(t=>t.stop());state.stream=null;}
-async function openCam(){stop();const constraints={video:{facingMode:{ideal:state.facing},width:{ideal:1280},height:{ideal:720}},audio:false};
- let stream;try{stream=await navigator.mediaDevices.getUserMedia(constraints);}catch(e){if(e.name==='OverconstrainedError')stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});else throw e;}
- video.srcObject=stream;state.stream=stream;await video.play();
- if(!video.videoWidth)await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('לא התקבלה תמונה מהמצלמה')),10000);video.addEventListener('loadedmetadata',()=>{clearTimeout(timer);resolve();},{once:true});});
- state.faces=null;state.lastVideoTime=-1;
+Object.keys(sets).forEach(buildChoices);updateChoices();
+function status(text){$('#status').textContent=text;}
+
+$$('.tab-button').forEach(button=>button.addEventListener('click',()=>setTab(button.dataset.tab)));
+function setTab(tab){
+  state.activeTab = tab;
+  $$('.tab-button').forEach(b=>{
+    const active = b.dataset.tab===tab;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-selected', String(active));
+  });
+  $$('.tab-page').forEach(p=>p.classList.toggle('active', p.dataset.page===tab));
 }
-const SOURCES=['https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22','https://unpkg.com/@mediapipe/tasks-vision@0.10.22'];
-async function setupFaceModel(){if(state.pending||state.model)return;state.pending=true;$('#loading').hidden=false;$('#errorBox').hidden=true;const errors=[];
- try{for(const source of SOURCES){try{const {FilesetResolver,FaceLandmarker}=await import(`${source}/vision_bundle.mjs`);
- const vision=await FilesetResolver.forVisionTasks(`${source}/wasm`);
- for(const delegate of ['GPU','CPU']){
-  try{state.model=await FaceLandmarker.createFromOptions(vision,{baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',delegate},runningMode:'VIDEO',numFaces:8,outputFaceBlendshapes:false});
-  $('#loading').hidden=true;return;
-  }catch(e){errors.push(`${delegate}: ${e.message||e}`);}
+
+let loadingModel = false;
+function showModelError(err) {
+ const message = String(err?.message || err || 'שגיאה לא ידועה');
+ console.error('Face model loading error:', err);
+ $('#modelDetails').textContent = `פרטי התקלה: ${message.slice(0, 350)}`;
+ $('#modelPanel').hidden = false;
+ $('#retryButton').disabled = false;
+ status('📷 המצלמה עובדת. זיהוי הפנים לא נטען. לחצי על ״נסי שוב״ לפרטים.');
+}
+async function makeLandmarker() {
+ if(state.landmarker || loadingModel) return;
+ loadingModel = true;
+ $('#retryButton').disabled = true;
+ $('#modelPanel').hidden = true;
+ const sources = [
+   {base:'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22', version:'0.10.22'},
+   {base:'https://unpkg.com/@mediapipe/tasks-vision@0.10.22', version:'0.10.22'},
+   {base:'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21', version:'0.10.21'}
+ ];
+ const modelUrls = ['https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'];
+ const errors = [];
+ try {
+   for(const source of sources) {
+     status(`✨ טוענת זיהוי פנים (${source.version})...`);
+     try {
+       const visionModule = await import(`${source.base}/vision_bundle.mjs`);
+       const {FaceLandmarker, FilesetResolver} = visionModule;
+       if (!FaceLandmarker || !FilesetResolver) throw new Error('הספרייה נטענה ללא FaceLandmarker');
+       const vision = await FilesetResolver.forVisionTasks(`${source.base}/wasm`);
+       for (const modelUrl of modelUrls) {
+         for (const delegate of ['GPU', 'CPU']) {
+           try {
+             state.landmarker = await FaceLandmarker.createFromOptions(vision, {
+               baseOptions: {modelAssetPath: modelUrl, delegate},
+               runningMode: 'VIDEO', numFaces: 2, outputFaceBlendshapes: true
+             });
+             $('#modelPanel').hidden = true;
+             status('✅ זיהוי הפנים מוכן! בחרי קעקוע 🦋');
+             return;
+           } catch(err) { errors.push(`${source.version} ${delegate}: ${String(err.message || err).slice(0,120)}`); }
+         }
+       }
+     } catch(err) { errors.push(`${source.version}: ${String(err.message || err).slice(0,150)}`); }
+   }
+   throw new Error(errors.join(' | ') || 'לא ניתן לטעון את קובצי MediaPipe');
+ } finally {loadingModel = false;}
+}
+async function loadFaceModel() { try { await makeLandmarker(); } catch(err) { showModelError(err); } }
+function cameraErrorMessage(err){
+ if(!window.isSecureContext) return 'יש לפתוח את האתר בכתובת HTTPS של GitHub Pages (לא כקובץ מקומי).';
+ if(err?.name==='NotAllowedError'||err?.name==='PermissionDeniedError') return 'הגישה למצלמה נחסמה. לחצי על סמל המנעול ליד כתובת האתר, אפשרי מצלמה ורענני את הדף.';
+ if(err?.name==='NotFoundError'||err?.name==='DevicesNotFoundError') return 'לא נמצאה מצלמה זמינה במכשיר.';
+ if(err?.name==='NotReadableError'||err?.name==='TrackStartError') return 'המצלמה בשימוש של אפליקציה אחרת. סגרי אותה ונסי שוב.';
+ if(err?.name==='OverconstrainedError') return 'לא ניתן להשתמש במצלמה עם ההגדרות הנוכחיות.';
+ return 'לא הצלחנו לפתוח את המצלמה: '+(err?.message||'שגיאה לא ידועה');
+}
+async function startCamera(){
+ const start=$('#startButton');start.disabled=true;
+ try{
+   if(!navigator.mediaDevices?.getUserMedia) throw new Error('נדרשת כתובת HTTPS או localhost ודפדפן שתומך במצלמה.');
+   status('פותחת מצלמה... 📷');
+   await openCamera();
+   $('#empty').hidden=true;$('#empty').style.display='none';
+   $('#saveButton').disabled=false;$('#switchButton').disabled=false;
+   state.running=true;requestAnimationFrame(loop);
+   status('המצלמה פועלת! טוענת זיהוי פנים... ✨');
+   await loadFaceModel();
+ }catch(err){
+   console.error('Camera start failed',err);
+   const message=cameraErrorMessage(err);
+   status(message); alert(message); start.disabled=false;
  }
- }catch(e){errors.push(`${source}: ${e.message||e}`);}}
- throw Error(errors.join(' / '));
- }catch(e){$('#errorBox').hidden=false;$('#errorDetails').textContent=String(e.message||e).slice(0,500);$('#facesPill').textContent='⚠️ אין זיהוי';console.error('MediaPipe failed',e);
- }finally{state.pending=false;$('#loading').hidden=true;}}
-function cameraError(e){if(!window.isSecureContext)return 'פתחו דרך GitHub Pages בכתובת https:// ולא כקובץ file://';if(e.name==='NotAllowedError')return 'המצלמה חסומה: אפשרו גישה למצלמה בהגדרות האתר.';return String(e.message||e);}
-$('#startButton').addEventListener('click',async()=>{$('#startButton').disabled=true;
- try{if(!navigator.mediaDevices?.getUserMedia)throw Error('נדרש HTTPS ודפדפן עם תמיכה במצלמה.');await openCam();state.running=true;$('#welcome').hidden=true;$('#saveButton').disabled=false;$('#shareButton').disabled=false;$('#flipButton').disabled=false;requestAnimationFrame(loop);void setupFaceModel();}
- catch(e){alert(cameraError(e));$('#startButton').disabled=false;}});
-$('#retryButton').addEventListener('click',()=>void setupFaceModel());
-$('#flipButton').addEventListener('click',async()=>{state.running=false;cancelAnimationFrame(frameHandle);const old=state.facing;state.facing=old==='user'?'environment':'user';try{await openCam();}catch(e){state.facing=old;try{await openCam();}catch(e2){alert(cameraError(e2));return;}}state.running=true;requestAnimationFrame(loop);});
-function photoBlob(){return new Promise((resolve,reject)=>{draw(performance.now());canvas.toBlob(blob=>blob?resolve(blob):reject(Error('לא ניתן להכין תמונה')),'image/png');});}
-async function savePhoto(){if(!state.running)return;try{const blob=await photoBlob();const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`hanukkah-magic-${Date.now()}.png`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}catch(e){alert(e.message);}}
+}
+async function openCamera(){
+ stopTracks(); let stream;
+ try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:state.facing},width:{ideal:960},height:{ideal:1280}},audio:false});}
+ catch(err){if(err.name==='OverconstrainedError')stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});else throw err;}
+ state.stream=stream; VIDEO.srcObject=stream; await VIDEO.play();
+ if(!VIDEO.videoWidth){await new Promise((resolve,reject)=>{ const t=setTimeout(()=>reject(new Error('המצלמה לא מספקת תמונה')),8000); VIDEO.addEventListener('loadedmetadata',()=>{clearTimeout(t);resolve();},{once:true}); });}
+ CANVAS.width=VIDEO.videoWidth; CANVAS.height=VIDEO.videoHeight;
+ state.result=null; state.timestamp=-1;
+}
+function stopTracks(){state.stream?.getTracks().forEach(t=>t.stop());state.stream=null;}
+function point(lm,index){const p=lm[index];return {x:p.x*CANVAS.width,y:p.y*CANVAS.height};}
+function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+function emoji(text,x,y,size,angle=0){CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.textAlign='center';CTX.textBaseline='middle';CTX.font=`${Math.round(size)}px "Apple Color Emoji","Segoe UI Emoji",sans-serif`;CTX.fillText(text,0,0);CTX.restore();}
+// Images are stored locally in the repository, with transparent backgrounds.
+const assetNames=['tiara','slipper','glitter_swirl','castle_tattoo','slipper_tattoo','fairy','prince','coach','star','wings_blue','wings_lilac','wings_gold'];
+const assetImages={};
+for(const name of assetNames){
+ const img=new Image();
+ img.src=`assets/${name}.${(['star','wings_blue','wings_lilac','wings_gold'].includes(name)?'svg':'png')}`;
+ assetImages[name]=img;
+}
+function drawArt(name,x,y,w,h,angle=0){
+ const img=assetImages[name];
+ if(!img||!img.complete||!img.naturalWidth)return;
+ const ratio=img.naturalWidth/img.naturalHeight;
+ if(!h)h=w/ratio;
+ CTX.save();CTX.translate(x,y);CTX.rotate(angle);CTX.drawImage(img,-w/2,-h/2,w,h);CTX.restore();
+}
+function drawCinderellaFace(lm,smile,index){
+ const left=point(lm,234),right=point(lm,454),top=point(lm,10),chin=point(lm,152),eyeL=point(lm,33),eyeR=point(lm,263);
+ const faceW=distance(left,right),faceH=distance(top,chin);
+ const tilt=Math.atan2(eyeR.y-eyeL.y,eyeR.x-eyeL.x);
+ const cheeks=[point(lm,205),point(lm,425)], forehead=point(lm,151);
+ const targets=state.cinderellaPosition==='both'?cheeks:state.cinderellaPosition==='forehead'?[forehead]:[cheeks[state.cinderellaPosition==='right'?0:1]];
+ if(state.cinderellaTattoo!=='none'){
+   const w=faceW*(state.cinderellaPosition==='forehead'?.39:.51);
+   targets.forEach((p,i)=>drawArt(state.cinderellaTattoo,p.x,p.y,w,0,tilt+(i===1?-.09:.09)));
+ }
+ if(state.cinderellaWings!=='none'){
+   // Decorative paired wings: each wing is outside the face oval, rather than covering eyes.
+   const wingImage=assetImages[state.cinderellaWings];
+   if(wingImage?.complete && wingImage.naturalWidth){
+     const wingH=faceH*1.35, wingW=faceW*0.85;
+     const centerY=(top.y+chin.y)*0.56;
+     CTX.save();
+     CTX.translate(left.x-faceW*.31, centerY);
+     CTX.rotate(tilt*.42);
+     CTX.drawImage(wingImage,-wingW, -wingH*.50, wingW, wingH);
+     CTX.restore();
+     CTX.save();
+     CTX.translate(right.x+faceW*.31, centerY);
+     CTX.rotate(tilt*.42);
+     CTX.translate(wingW,0); CTX.scale(-1,1);
+     CTX.drawImage(wingImage,0,-wingH*.50,wingW,wingH);
+     CTX.restore();
+   }
+ }
+ if(state.cinderellaAccessory==='tiara'){
+   // Crown sits over natural hair, no artificial hair added.
+   drawArt('tiara',top.x,top.y-faceH*.19,faceW*1.12,0,tilt);
+ }
+ if(state.cinderellaCompanion!=='none'){
+   const name=state.cinderellaCompanion;
+   const x=right.x+faceW*.45,y=(top.y+chin.y)*.50;
+   drawArt(name,x,y,faceW*.75,0,0);
+ }
+}
+function drawMagicFace(lm,smile,index){
+ const left=point(lm,234),right=point(lm,454),top=point(lm,10),chin=point(lm,152),eyeL=point(lm,33),eyeR=point(lm,263);
+ const faceW=distance(left,right), faceH=distance(top,chin);
+ const tilt=Math.atan2(eyeR.y-eyeL.y,eyeR.x-eyeL.x);
+ const cheekA=point(lm,205),cheekB=point(lm,425);
+ const cheeks=state.position==='both'?[cheekA,cheekB]:state.position==='forehead'?[point(lm,151)]:[state.position==='right'?cheekA:cheekB];
+ if(state.tattoo!=='none') cheeks.forEach(p=>emoji(state.tattoo,p.x,p.y,Math.max(21,faceW*(state.position==='forehead'?.23:.20)),tilt));
+ const centerX=(eyeL.x+eyeR.x)/2,centerY=(eyeL.y+eyeR.y)/2;
+ if(state.accessory==='👑')emoji('👑',top.x,top.y-faceH*.13,faceW*.7,tilt);
+ if(state.accessory==='😎')emoji('🕶️',centerX,centerY,faceW*.92,tilt);
+ if(state.accessory==='🐱') emoji('🐱',top.x,top.y-faceH*.17,faceW*.66,tilt);
+ if(state.accessory==='🎀')emoji('🎀',top.x-faceW*.24,top.y-faceH*.09,faceW*.38,tilt);
+ if(state.accessory==='🥸')emoji('〰️',point(lm,13).x,point(lm,13).y-faceH*.075,faceW*.46,tilt);
+ if(smile && state.smile!=='none'){
+   for(let i=0;i<5;i++){
+      const time=performance.now()/720+i*1.5+index;
+      const x=top.x+Math.cos(time*1.5+i*2)*faceW*(.42+i*.08);
+      const y=top.y-faceH*.13-Math.sin(time+i)*faceH*.13;
+      emoji(state.smile,x,y,faceW*.15+Math.sin(time)*4,tilt);
+   }
+ }
+}
+function smileDetected(i){const categories=state.result?.faceBlendshapes?.[i]?.categories||[]; const score=name=>categories.find(c=>c.categoryName===name)?.score||0; return (score('mouthSmileLeft')+score('mouthSmileRight'))/2>.33;}
+function paint(){
+ const w=CANVAS.width,h=CANVAS.height;if(!w||!h)return;
+ CTX.save();
+ if(state.facing==='user'){CTX.translate(w,0);CTX.scale(-1,1);}
+ CTX.drawImage(VIDEO,0,0,w,h);
+ if(state.result?.faceLandmarks?.length){
+   state.result.faceLandmarks.forEach((lm,i)=>{
+     if(state.activeTab==='cinderella') drawCinderellaFace(lm,smileDetected(i),i);
+     else drawMagicFace(lm,smileDetected(i),i);
+   });
+ }
+ CTX.restore();
+}
+function loop(now){if(!state.running)return; if(VIDEO.readyState>=2){ if(state.landmarker && VIDEO.currentTime!==state.timestamp && now-state.lastDetection>65){ state.lastDetection=now; state.timestamp=VIDEO.currentTime; try{state.result=state.landmarker.detectForVideo(VIDEO,now);}catch(err){console.warn('Frame detection error:',err);} } paint(); if(state.landmarker){ if(state.result?.faceLandmarks?.length) status(''); else status('הציגי את הפנים למצלמה 😊'); } } requestAnimationFrame(loop);}
+function savePhoto(){ if(!state.running||!CANVAS.width)return; paint(); const filename=`face-magic-${new Date().toISOString().replace(/[:.]/g,'-')}.png`; CANVAS.toBlob(blob=>{ if(!blob){alert('לא ניתן לשמור תמונה במכשיר הזה');return;} const url=URL.createObjectURL(blob); const a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove(); setTimeout(()=>URL.revokeObjectURL(url),30000); status('התמונה נשמרה או הועברה להורדות 📸'); },'image/png'); }
+function clearCurrent(){
+ if(state.activeTab==='cinderella'){
+   state.cinderellaTattoo='none'; state.cinderellaCompanion='none'; state.cinderellaAccessory='none'; state.cinderellaWings='none'; state.cinderellaPosition='both';
+ } else {
+   state.tattoo='none'; state.accessory='none'; state.smile='none'; state.position='right';
+ }
+ updateChoices();
+}
+$('#startButton').addEventListener('click',startCamera);
+$('#retryButton').addEventListener('click',loadFaceModel);
 $('#saveButton').addEventListener('click',savePhoto);
-$('#shareButton').addEventListener('click',async()=>{if(!state.running)return;try{const blob=await photoBlob();const file=new File([blob],`hanukkah-magic-${Date.now()}.png`,{type:'image/png'});
- if(navigator.canShare?.({files:[file]})){await navigator.share({files:[file],title:'חנוכה שמח!'});}
- else await savePhoto();
- }catch(e){if(e.name!=='AbortError')alert('לא ניתן לשתף כרגע, השתמשו בשמירת תמונה.');}});
-window.addEventListener('pagehide',()=>{state.running=false;cancelAnimationFrame(frameHandle);stop();});
+$('#switchButton').addEventListener('click',async()=>{ state.running=false; state.facing=state.facing==='user'?'environment':'user'; try{await openCamera(); state.running=true; requestAnimationFrame(loop);}catch(e){console.error(e); alert('לא הצלחנו להחליף מצלמה'); state.facing=state.facing==='user'?'environment':'user'; try{await openCamera(); state.running=true; requestAnimationFrame(loop);}catch(e2){status('שגיאת מצלמה');}} });
+$('#clearButton').addEventListener('click',clearCurrent);
+window.addEventListener('pagehide',stopTracks);
